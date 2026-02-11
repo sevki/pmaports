@@ -102,14 +102,25 @@ prepare() {
 
 build() {
 	unset LDFLAGS
-	make ARCH="$_carch" LLVM=1 HOSTLDFLAGS="-fuse-ld=lld" \
-		KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-$_flavor"
+	case "$CARCH" in
+		aarch64)
+			make ARCH="$_carch" LLVM=1 \
+				KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-$_flavor" \
+				Image.gz vmlinuz.efi modules dtbs
+			;;
+		*)
+		make ARCH="$_carch" LLVM=1 \
+			KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-$_flavor"
+			;;
+		esac
+>>>>>>> 5c99dd543b (linux-postmarketos-lts: support building vmlinuz.efi and Image.gz for aarch64)
 }
 
 package() {
 	local _install
 	case "$CARCH" in
-		arm*|aarch64|riscv*) _install="zinstall dtbs_install" ;;
+		aarch64) _install="dtbs_install" ;;
+		arm|riscv*) _install="zinstall dtbs_install" ;;
 		*) _install="install" ;;
 	esac
 
@@ -123,8 +134,16 @@ package() {
 
 	rm -f "$pkgdir"/usr/lib/modules/*/build "$pkgdir"/usr/lib/modules/*/source
 
-	install -Dm644 "$builddir"/include/config/kernel.release \
-		"$pkgdir"/usr/share/kernel/"$_flavor"/kernel.release
+	install -D "$builddir"/include/config/kernel.release \
+		"$pkgdir"/usr/share/kernel/$_flavor/kernel.release
+
+	case "$CARCH" in
+		arm*|aarch64)
+			install -D "$builddir"/arch/"$_carch"/boot/Image.gz \
+				"$pkgdir"/boot/Image.gz
+			;;
+		*) ;;
+	esac
 }
 
 sha512sums="
