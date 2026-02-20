@@ -2,7 +2,7 @@
 maintainer="Aelin <aelin@postmarketos.org>"
 pkgname=linux-postmarketos-stable
 pkgver=7.2.8
-pkgrel=0
+pkgrel=1
 _kver=${pkgver%.*}
 pkgdesc="Stable Kernel"
 # armhf: pmbootstrap cannot dynamically choose a defconfig, so it ends up using multi_v7_defconfig which isn't correct
@@ -51,7 +51,10 @@ makedepends="
 	sed
 	zstd
 "
-replaces="linux-stable"
+replaces="
+	linux-stable
+	linux-postmarketos-qcom-sc7180
+"
 
 # powerpc boot wrapper patches:
 # Necessary for compilation without cross GCC in PATH, cherry-picked from
