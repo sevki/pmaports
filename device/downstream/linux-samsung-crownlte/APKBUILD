@@ -19,9 +19,17 @@ makedepends="
 	devicepkg-dev
 	dtbtool-exynos
 	flex
+	gcc6
 	openssl-dev
 	perl
 "
+
+# https://wiki.postmarketos.org/wiki/Downstream_kernel_specific_package#Use_GCC_6
+if [ "${CC:0:5}" != "gcc6-" ]; then
+	CC="gcc6-$CC"
+	HOSTCC="gcc6-gcc"
+	CROSS_COMPILE="gcc6-$CROSS_COMPILE"
+fi
 
 _config="config-$_flavor.$arch"
 source="
@@ -47,7 +55,7 @@ prepare() {
 
 build() {
 	unset LDFLAGS
-	make O="$_outdir" ARCH="$_carch" CC="${CC:-gcc}" \
+	make O="$_outdir" ARCH="$_carch" \
 		KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-postmarketOS"
 
 	# Master DTB (deviceinfo_bootimg_qcdt)
