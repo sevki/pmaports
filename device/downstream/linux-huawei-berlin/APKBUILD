@@ -1,7 +1,6 @@
-# Archived: unmaintained
 # Reference: <https://postmarketos.org/vendorkernel>
 # Kernel config based on: arch/arm64/configs/merge_hi6250_defconfig
-maintainer=""
+maintainer="Why-com-ui <cr19451010@gmail.com>"
 pkgname=linux-huawei-berlin
 pkgver=4.4.174
 pkgrel=0
@@ -53,16 +52,18 @@ build() {
 	unset LDFLAGS
 	make O="$_outdir" ARCH="$_carch" CC="${CC:-gcc}" \
 		KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-postmarketOS"
+	make O="$_outdir" ARCH="$_carch" CC="${CC:-gcc}" \
+		KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-postmarketOS" Image.gz
 }
 
 package() {
-	downstreamkernel_package "$builddir" "$pkgdir" "$_carch" \
+	KERNEL_IMAGE_NAME="Image.gz" downstreamkernel_package "$builddir" "$pkgdir" "$_carch" \
 		"$_flavor" "$_outdir"
 }
 
 sha512sums="
 457975f60727cb0d6e0a62a2706fc37431480f47635b8deed178843d71a8ae9f0893f33e84b0b41dbfe33e47c7b4b05aa99efbc57fa4411bdbf48395b3340f3e  linux-huawei-berlin-f148d781c3d6bad4bae8d1c4073e233abeca9c96.tar.gz
-e5df13cbd10d067ef208a573f6bb2579f5f1069b7b7b6fc00e9e12e050bf8c5240e50a7d951d29d65fa8b45728de6e694e0dfd3f976e6501d62412eae81b51e1  config-huawei-berlin.aarch64
+33befc0267870355ada7a53eb409b1ac387487c5eb464de45828a811c26da56afb64235f30bd58798a964b4fe1f36d173dea27e4ab1731891eada3f5f28f6259  config-huawei-berlin.aarch64
 16e092ed5f22db789c8f6531c2ac082ae13e82fcfa0d3fb8bc85dca7b563e484bc70b4144cc96882df75c26f005d45122277b3e7e4e83cb478860c62123ecf63  01_remove_wireguard.patch
 c02310ae289c85b7a3f85e3f4a95795ca048d6201bcfd227d1b17618b2643d2df2b65477b162463c1c02a0df8ad70915d9dd63c83edcfb7c3b3c9bd1bdebd9ca  02_fix_undeclared_AID_INET.patch
 3c7120bf70cdf508f2d5c919d1e0fa9e716882e3774e146ab953e9708f353d0e71af5325e0e9c881601aa90d6f131892b2f7e8b9bd774b4f993d17da189e5141  03_fix_dtc.patch

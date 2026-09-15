@@ -12,6 +12,8 @@ deviceinfo_arch="aarch64"
 # Device related
 deviceinfo_chassis="handset"
 deviceinfo_external_storage="true"
+deviceinfo_usb_network_function="rndis.usb0"
+deviceinfo_zram_swap_algo="lz4"
 
 # Bootloader related
 deviceinfo_flash_method="fastboot"
