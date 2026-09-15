@@ -3,7 +3,7 @@
 maintainer=""
 pkgname=device-oneplus-cheeseburger
 pkgdesc="OnePlus 5"
-pkgver=9
+pkgver=10
 pkgrel=0
 url="https://postmarketos.org"
 license="MIT"
@@ -15,6 +15,7 @@ depends="
 "
 makedepends="devicepkg-dev"
 source="
+	30-qcom-firmware.files
 	21-oneplus5-ts.rules
 	deviceinfo
 	kernel-cmdline.mainline.conf
@@ -52,6 +53,13 @@ kernel_mainline() {
 	devicepkg_subpackage_kernel $startdir $pkgname $subpkgname
 }
 
+firmware_initramfs() {
+	pkgdesc="Files to be included in the initramfs to support osk-sdl"
+
+	install -Dm644 "$srcdir"/30-qcom-firmware.files \
+		"$subpkgdir"/usr/share/mkinitfs/files/30-qcom-firmware.files
+}
+
 nonfree_firmware() {
 	pkgdesc="Firmware for GPU, Wi-Fi, Bluetooth etc. (also needed for full disk encryption)"
 	depends="firmware-oneplus-msm8998"
@@ -81,6 +89,7 @@ plasma_mobile_udev() {
 }
 
 sha512sums="
+c29b52d5d094f0fc9f675e5c0d7e9d464818748ceea7b2dd57ece707b08db05e6c9299bec4790383201fc5c5138c92b9a02327d0ed1c59a194f7052c93cc75ea  30-qcom-firmware.files
 fcb37390af6f2a0aed381585eeec7d0dd30e0b291d97a6fa433ed4b5d3badb3298709972d382a44f555329f83aabdbb8c8affcfe3933072538c4ac8c3ff9aca8  21-oneplus5-ts.rules
 65d2cd37cb5d8646918ccd84c2531b58df4e528565e70af5a5f7a8fd8693b065422cfdbf9ae5f564799fc761620c00b17109e25e5350b47f24e0c3184ce3b88d  deviceinfo
 515b7a75cf7cfc9c3e9d122140a32fd14f84fe99456145686a93ed04de3977d07272ba4dc9b05d213461e62733530a0ea6def83c48621f5c0b2d10f2254ed359  kernel-cmdline.mainline.conf
