@@ -2,7 +2,7 @@
 # Co-Maintainer: Ingo Reitz <9l@9lo.re>
 maintainer="Adam Thiede <me@adamthiede.com>"
 pkgname=linux-postmarketos-mediatek-mt8173
-pkgver=7.2.2
+pkgver=7.2.6
 pkgrel=0
 pkgdesc="Mainline kernel fork for Mediatek MT8173 devices"
 arch="aarch64"
@@ -46,6 +46,7 @@ source="
 	https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-${pkgver//_/-}.tar.xz
 	$_config
 	0001-resolve_btfids-preserve-parameter-names-when-process.patch
+	powervr-MT8173-GPU-support.patch
 "
 builddir="$srcdir/linux-${_kernver//_/-}"
 
@@ -76,7 +77,8 @@ package() {
 }
 
 sha512sums="
-6ca338fd2f9d2224b9187ba1cad18c05417c0504771917203a023467a8ac3a34e346bd3bc5a3f5716aa9810381a28c730ea5fc3726773dca36d75a4677178b13  linux-7.2.2.tar.xz
-92dffe35ffbb0abf573b4be7c3aadd80f84031873b651ac62db1a5488cf203b66940f3cad1ad2495a29f2f71524d9425ce73dbbb4ae0e3963ba9d02a191cf16e  config-postmarketos-mediatek-mt8173.aarch64
+2bdcc46f2fb4368aace87b8d063ee50ba93e763f31b1b2401abe2109371bd7ccc1432d0d07159f00f0fc5dbe2e1953ade1d9973bcf4fbc73aaaf056d99652e67  linux-7.2.6.tar.xz
+d841680e5deab6711914e539a8edf1f4a84d751eb5db48f86cc55b7da658a82b0586b8569836c237c733108a16a7b4232b840e248ece212d57201bfb75d3635c  config-postmarketos-mediatek-mt8173.aarch64
 901780c4c468ebf8b6af7c27530fafb0439dfae889208c35f22aa7447902078d147db69a1c8e2115cd13f51c641eef878d9335b7527dc7fa2240cd617e045aab  0001-resolve_btfids-preserve-parameter-names-when-process.patch
+f6d2889cf9262bd7d5d4663d907b6a0be12ebf3cfe752cefebf5229afa7ad939d69a41797f0b8f102c7744637ae7dcd8b031299383750cb0b74cf87885cb94d6  powervr-MT8173-GPU-support.patch
 "
