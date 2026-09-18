@@ -1,7 +1,7 @@
 maintainer="Oliver Smith <ollieparanoid@postmarketos.org>"
 pkgname=postmarketos-android-recovery-installer
 pkgver=1.0.7
-pkgrel=1
+pkgrel=2
 pkgdesc="TWRP compatible postmarketOS installer script"
 arch="all"
 url="https://postmarketos.org"
@@ -19,14 +19,14 @@ package() {
 	install -Dm755 build_zip.sh \
 		"$pkgdir"/usr/bin/build-recovery-zip
 	install -Dm644 update-binary \
-		"$pkgdir"/var/lib/postmarketos-android-recovery-installer/META-INF/com/google/android/update-binary
+		"$pkgdir"/usr/lib/postmarketos-android-recovery-installer/META-INF/com/google/android/update-binary
 	install -Dm755 pmos_chroot \
-		"$pkgdir"/var/lib/postmarketos-android-recovery-installer/pmos_chroot
+		"$pkgdir"/usr/lib/postmarketos-android-recovery-installer/pmos_chroot
 	install -Dm755 disable-warning \
-		"$pkgdir"/var/lib/postmarketos-android-recovery-installer/disable-warning
+		"$pkgdir"/usr/lib/postmarketos-android-recovery-installer/disable-warning
 	for file in pmos_install pmos_install_functions pmos_setpw pmos_install_part; do
 		install -Dm755 $file \
-			"$pkgdir"/var/lib/postmarketos-android-recovery-installer/chroot/bin/$file
+			"$pkgdir"/usr/lib/postmarketos-android-recovery-installer/chroot/bin/$file
 	done
 }
 sha512sums="
