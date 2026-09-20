@@ -1,0 +1,13 @@
+diff --git a/drivers/pinctrl/mediatek/pinctrl-mtk-common-v2_debug.c b/drivers/pinctrl/mediatek/pinctrl-mtk-common-v2_debug.c
+index daa8f126a..1cd4c2b0d 100644
+--- a/drivers/pinctrl/mediatek/pinctrl-mtk-common-v2_debug.c
++++ b/drivers/pinctrl/mediatek/pinctrl-mtk-common-v2_debug.c
+@@ -11,7 +11,7 @@
+ #include <dt-bindings/pinctrl/mt65xx.h>
+ #include <linux/gpio.h>
+ #include <linux/gpio/consumer.h>
+-#include <../../gpio/gpiolib.h>
++#include "../../gpio/gpiolib.h"
+ #include <asm-generic/gpio.h>
+ #include <linux/delay.h>
+ #include <linux/proc_fs.h>

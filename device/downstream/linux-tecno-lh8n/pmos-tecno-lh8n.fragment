@@ -1,0 +1,49 @@
+# pmOS-specific requirements not covered by gki_defconfig + gold_defconfig.
+# Android's ueventd manages /dev itself, so devtmpfs was never needed
+# upstream of this — postmarketOS's userspace (mdev/eudev) requires it.
+CONFIG_DEVTMPFS=y
+CONFIG_DEVTMPFS_MOUNT=y
+CONFIG_IPV6=y
+CONFIG_SYSVIPC=y
+CONFIG_POSIX_MQUEUE=y
+CONFIG_AUTOFS4_FS=y
+CONFIG_BRIDGE=y
+CONFIG_VETH=y
+
+# Disable Android's SELinux subsystem — postmarketOS doesn't use it, and
+# building scripts/selinux/genheaders (a HOST tool, not cross-compiled)
+# fails looking for the build machine's asm/types.h from linux-headers.
+# Rather than add that host dependency just to build code we don't want,
+# turn the whole thing off; DAC-only is what pmOS's userspace expects.
+# CONFIG_SECURITY_SELINUX is not set
+# CONFIG_DEFAULT_SECURITY_SELINUX is not set
+
+# This tree targets a much older GCC than what's in the pmOS build
+# chroot. Newer GCC versions keep adding stricter warnings (this one:
+# -Wdangling-pointer, added in GCC 12, false-triggers on mm/compaction.c's
+# LIST_HEAD usage) that CONFIG_WERROR then turns into hard build failures.
+# Patching every individual new-compiler warning across an entire aging
+# Android tree isn't worth it — turn off treating warnings as errors,
+# which is what this option is for.
+# CONFIG_WERROR is not set
+
+# CONFIG_IKHEADERS embeds a full copy of kernel headers into the running
+# kernel (exposed at /sys/kernel/kheaders.tar.xz) for tools like eBPF/BCC
+# that build against a live kernel's headers. It's built by kernel/
+# gen_kheaders.sh, which invokes find/tar with options this chroot's
+# minimal Alpine tooling doesn't support (Error 127 — command not found,
+# confirmed by a `find` usage-text dump landing in the build log right
+# before the failure). Not something a phone port needs — disable rather
+# than chase busybox-vs-GNU tool mismatches for a feature we don't use.
+# CONFIG_IKHEADERS is not set
+
+# Required by pmaports kconfig checks (category: default)
+CONFIG_FB=y
+CONFIG_VT=y
+CONFIG_DRM_FBDEV_EMULATION=y
+CONFIG_SYN_COOKIES=y
+CONFIG_TMPFS_POSIX_ACL=y
+CONFIG_UEVENT_HELPER=y
+CONFIG_USER_NS=y
+CONFIG_UDMABUF=y
+CONFIG_NULL_TTY=m

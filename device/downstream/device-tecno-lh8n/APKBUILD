@@ -1,0 +1,34 @@
+# Reference: <https://postmarketos.org/devicepkg>
+# RECONSTRUCTED — this replaces device/downstream/device-tecno-lh8n/APKBUILD
+# after it got overwritten with kernel package content by mistake. This is
+# pmbootstrap's standard device-package boilerplate; nothing device-specific
+# was in the original beyond what's below plus whatever depends/pkgver
+# pmbootstrap's actual template uses for a "downstream" tier device — sanity
+# check against another downstream device's APKBUILD in the same pmaports
+# tree if anything here looks off (e.g. `find device/downstream -name
+# APKBUILD | head -3` and diff structure, not content).
+
+maintainer="NVMe <yadhrmstr@gmail.com>"
+pkgname=device-tecno-lh8n
+pkgdesc="TECNO POVA 5 Pro"
+pkgver=1
+pkgrel=0
+url="https://postmarketos.org"
+arch="aarch64"
+options="!check !archcheck"
+depends="postmarketos-base linux-tecno-lh8n mkbootimg"
+makedepends="devicepkg-dev"
+source="deviceinfo modules-initfs"
+
+build() {
+	devicepkg_build "$startdir" "$pkgname"
+}
+
+package() {
+	devicepkg_package "$startdir" "$pkgname"
+}
+
+sha512sums="
+e8d19862bf32cf587b5ce05e8d5128fb919a21e8a2167ac64262ef601d3cc31c193ac8e4de2d8d547199c784bb43a89b9880f18fcc5d620173c4fb2e94abdcf4  deviceinfo
+7edb862d27ba97c086c2d1f82318e93561c8274b6e56f427ad3c4ae9a07d4763e7ff6767cd71c0d580ccf3e2e647b00dbaee1e30c9d4f4b0b40b12326013c474  modules-initfs
+"
