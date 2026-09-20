@@ -9,8 +9,8 @@ license="MIT"
 arch="aarch64"
 options="!check !archcheck"
 depends="
-	android-tools-mkbootimg
 	linux-samsung-crownlte
+	mkbootimg-osm0sis
 	msm-fb-refresher
 	postmarketos-base
 	postmarketos-base-downstream
