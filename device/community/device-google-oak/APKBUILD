@@ -5,7 +5,7 @@
 maintainer="Adam Thiede <me@adamthiede.com>"
 pkgname=device-google-oak
 pkgdesc="Google Oak Chromebooks"
-pkgver=11
+pkgver=12
 pkgrel=0
 url="https://postmarketos.org"
 license="MIT"
@@ -23,7 +23,16 @@ depends="
 	postmarketos-cros-common
 "
 makedepends="devicepkg-dev"
-source="deviceinfo kernel-cmdline.conf modules-initfs"
+source="
+	deviceinfo
+	kernel-cmdline.conf
+	modules-initfs
+	powervr.conf
+	powervr.sh
+	powervr-cmdline.conf
+	powervr-wlroots.sh
+"
+subpackages="$pkgname-gpuconfig"
 
 # provides and replaces to switch old installations to this package
 provides="google-elm=$pkgver-r$pkgrel google-hana=$pkgver-r$pkgrel"
@@ -37,8 +46,23 @@ package() {
 	devicepkg_package $startdir $pkgname
 }
 
+gpuconfig() {
+	install -Dm644 "$srcdir"/powervr.sh \
+		"$subpkgdir"/etc/profile.d/powervr.sh
+	install -Dm644 "$srcdir"/powervr-wlroots.sh \
+		"$subpkgdir"/etc/profile.d/powervr-wlroots.sh
+	install -Dm644 "$srcdir"/powervr.conf \
+		"$subpkgdir"/etc/X11/xorg.conf.d/powervr.conf
+	install -Dm644 "$srcdir"/powervr-cmdline.conf \
+		"$subpkgdir"/usr/lib/kernel-cmdline.d/powervr.conf
+}
+
 sha512sums="
 cab64e21c7710d875cac4ed459a7c6ca8547d7234704e8cb80e875a5cfc65cab6cac00be0c3d9b9300e96f9a45c1b315896708b488024dcffc7cb42c850127e0  deviceinfo
-09dfc86138379250bc72b3395a4a94257da81d359cb210ee871cfa8efe6450ca3bbd95a134f365bc509bebcde5e882433805d9b265bdd8df12fd85c86491d66f  kernel-cmdline.conf
+97e88eaa9b8e7989a20d2572479fe5d1fe0284de862da11c91b1f347099d5704673837db01a6b0c289fee0a2d7236f64fba31fd6001475f957c23203e34fd6fb  kernel-cmdline.conf
 4b0197eacfeeb4b13f5abc26950f570ee762742547674ce10110ccea63eb46630a2e3b5f87e9c9a1f9deda21baf05bec248ab7a65656687ec94d296b5657dafa  modules-initfs
+f154106b40f05623ddfc17523726f9d700043e6794651745de1bdfb53ca5d95922b01c020469a7cdf1e47fa7768a4a6e91aa9bf928cb2c19dd5171ac575e3bc9  powervr.conf
+d11a5732c135725a1e154581f367f5500165a03f84d70b792ad872ee5d9a841bde9f434ac60ee1e7e4796daa6ad3e0ae6ee20bf0ac48f143769707cf096b2453  powervr.sh
+5f0e4a6c6ec9c03397ce66fca452c8b9af16a575cbb06a831720adb5ca66551241d5eb68ba11958ee62136449fabb7db9f604f3ce69852c47286bbaea19e2404  powervr-cmdline.conf
+97a2da5fbc5f26a537f6c4e80c2c4a167ab19dfeeda1c333cd644dcd172f1bbe9394aaa42ab6d35fc63144862c53f1ac0c81b1d0f5b0b88cadcc8d113370122e  powervr-wlroots.sh
 "
