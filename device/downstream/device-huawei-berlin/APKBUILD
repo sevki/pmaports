@@ -2,7 +2,7 @@
 maintainer="Why-com-ui <cr19451010@gmail.com>"
 pkgname=device-huawei-berlin
 pkgdesc="Huawei Honor 6X"
-pkgver=5
+pkgver=6
 pkgrel=0
 url="https://postmarketos.org"
 license="MIT"
@@ -17,7 +17,26 @@ depends="
 	postmarketos-base
 "
 makedepends="devicepkg-dev"
-source="deviceinfo kernel-cmdline.conf"
+install="$pkgname-xfce-openrc.post-install"
+subpackages="
+	$pkgname-xfce:xfce
+	$pkgname-xfce-openrc:xfce_openrc
+"
+source="
+	90-honor6x-lightdm.conf
+	honor6x-display-manager.initd
+	honor6x-lightdm-greeter-wrapper
+	honor6x-lightdm-session-wrapper
+	honor6x-display-setup
+	honor6x-displayctl
+	honor6x-fbdev.conf.in
+	honor6x-screen-toggle.initd
+	honor6x-screen-toggle.py
+	honor6x-xorg-policy.conf
+	device-huawei-berlin-xfce-openrc.post-install
+	deviceinfo
+	kernel-cmdline.conf
+"
 
 build() {
 	devicepkg_build $startdir $pkgname
@@ -27,8 +46,55 @@ package() {
 	devicepkg_package $startdir $pkgname
 }
 
+xfce() {
+	install_if="$pkgname=$pkgver-r$pkgrel postmarketos-ui-xfce4"
+	depends="
+		honor6x-fbdevhw-compat
+		python3
+		xf86-input-libinput
+		xf86-video-fbdev
+	"
+
+	install -Dm644 "$srcdir"/honor6x-fbdev.conf.in \
+		"$subpkgdir"/usr/share/honor6x/honor6x-fbdev.conf.in
+	install -Dm755 "$srcdir"/honor6x-display-setup \
+		"$subpkgdir"/usr/bin/honor6x-display-setup
+	install -Dm755 "$srcdir"/honor6x-displayctl \
+		"$subpkgdir"/usr/bin/honor6x-displayctl
+	install -Dm755 "$srcdir"/honor6x-screen-toggle.py \
+		"$subpkgdir"/usr/bin/honor6x-screen-toggle
+	install -Dm755 "$srcdir"/honor6x-lightdm-greeter-wrapper \
+		"$subpkgdir"/usr/bin/honor6x-lightdm-greeter-wrapper
+	install -Dm755 "$srcdir"/honor6x-lightdm-session-wrapper \
+		"$subpkgdir"/usr/bin/honor6x-lightdm-session-wrapper
+	install -Dm644 "$srcdir"/honor6x-xorg-policy.conf \
+		"$subpkgdir"/usr/share/X11/xorg.conf.d/22-honor6x-xorg-policy.conf
+	install -Dm644 "$srcdir"/90-honor6x-lightdm.conf \
+		"$subpkgdir"/usr/share/lightdm/lightdm.conf.d/90-honor6x.conf
+}
+
+xfce_openrc() {
+	install_if="$pkgname=$pkgver-r$pkgrel postmarketos-ui-xfce4 openrc"
+	depends="$pkgname-xfce=$pkgver-r$pkgrel openrc"
+
+	install -Dm755 "$srcdir"/honor6x-display-manager.initd \
+		"$subpkgdir"/etc/init.d/honor6x-display-manager
+	install -Dm755 "$srcdir"/honor6x-screen-toggle.initd \
+		"$subpkgdir"/etc/init.d/honor6x-screen-toggle
+}
 
 sha512sums="
+9d020472423424f3a313f2c0618536c19099d326ad4928c03bf7603eaf444ee7c77066116e8c24cca3faa1fe4b497fd8d30370f0603e067ee456ad31a3f84e5f  90-honor6x-lightdm.conf
+47151a486d1aab76cd1809ab148a99f61369c5d3e9282da1c8b361c264b77060dae0f03ba7635fc9e69b7958521558811cc1a82626dafd59ee987e76bdb765b8  honor6x-display-manager.initd
+bba429c11d1e8066ccfaad2d5a14a7937d9505c9dd6d6a9a4d2230ee26a4b9dcfa205f7922756b4609a3e5cd8c098d96cec6b79dd092995bd055e96d591e5f5f  honor6x-lightdm-greeter-wrapper
+ec0394207ac33d6963c763bce72597b54493ed1942ee0edf5efaeb50d1a8bfb9f623fa5638668ce41cac89819650d3f73e155ef94029d3e39543b5b6b62341d4  honor6x-lightdm-session-wrapper
+23b4e10e5bf28f0c905531d3ae9cbfea318cb4a42cf60f1a04362423175302cf02fc672ce8c3c09ce085442aac4cc7ab7510939a7656db27b8140c78be5d6b55  honor6x-display-setup
+e99c05474d722b47c44af8f4412e6fb182396f775433abf017f0369072c534a99a1589cc1a476907d190eaebbd6bc9f0cb31bc543e7877f684a116a93b4efe3e  honor6x-displayctl
+28e6b0ce49d92e73f3d7d7cf7f7ef9176b29142f91f3c3f87867de5f566ccfb2f1ef04398541f57a2b6b2f091d388ef5f90d7bcad9bd0984165cd508ff17866a  honor6x-fbdev.conf.in
+626adadd624dbf62f9e3b67052cfb210104739c297c9e1309236e5f24681cca869c56d29e38d09973ebf53f6b971b2d688465cc01d7a7e15c2d269a75f6ab00c  honor6x-screen-toggle.initd
+855a9e28e4834fbe545fcefc9e54d6f3fdfa53a834d196484f26b3bfda31e6d6b83119ad097046397cf8cde400c086cf83f86e077da8ff8f01925621bdff53cf  honor6x-screen-toggle.py
+1b7b351f9b05cd08d631e8de0f0bf5fd4fd530fdb173fd6355d7f05b00d8267579806da4ac7418e36bdcb61263f067b66bb2f4164145698ff5850d831cc31e12  honor6x-xorg-policy.conf
+87e0081f7a2ff56ecad3c7ad4eabad4a694c70938af3781a28c69b7f0d32828e1a85edd7af36b97112684b966ca90b65ec5bbf3171638ccc9070642abac53cc1  device-huawei-berlin-xfce-openrc.post-install
 9b194c16d969f8c662e8eb0d02d115070d0873b530cb9ec6ed825a8e55fd137445ad809d386ba6ee241b272f82fa7e246b43401620ec5854b1cd4612b84a797c  deviceinfo
 e30d7197b06041ce52e0e923c021abbf8f1ed305f6d5657ce3af1b81543d29adcf2755743e4b11bce1ee1badf4b424f22e1de45966b671c1fff8109d1e27aec5  kernel-cmdline.conf
 "

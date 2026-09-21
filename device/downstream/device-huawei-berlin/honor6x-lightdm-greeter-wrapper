@@ -1,0 +1,4 @@
+#!/bin/sh
+
+export GLYCIN_DISABLE_SANDBOX=i-know-the-risks
+exec "$@"

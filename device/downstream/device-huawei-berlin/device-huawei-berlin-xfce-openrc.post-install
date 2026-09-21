@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Enable the device-specific services when the XFCE/OpenRC subpackages
+# are installed. The generic UI package enables LightDM and NetworkManager.
+rc-update add honor6x-display-manager default
+rc-update add honor6x-screen-toggle default
