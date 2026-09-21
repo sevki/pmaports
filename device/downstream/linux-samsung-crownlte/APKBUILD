@@ -8,7 +8,6 @@ _commit="5a2dd7d6f3a05168d2f1303c3b29e9e9fa39b781"
 pkgdesc="Samsung Galaxy Note 9 kernel fork"
 arch="aarch64"
 _carch="arm64"
-_flavor="samsung-crownlte"
 url="https://kernel.org"
 license="GPL-2.0-only"
 options="!strip !check !tracedeps pmb:cross-native"
@@ -31,10 +30,9 @@ if [ "${CC:0:5}" != "gcc6-" ]; then
 	CROSS_COMPILE="gcc6-$CROSS_COMPILE"
 fi
 
-_config="config-$_flavor.$arch"
 source="
 	$pkgname-$_commit.tar.gz::https://github.com/LineageOS/android_kernel_samsung_universal9810/archive/$_commit.tar.gz
-	$_config
+	config-${pkgname#linux-}.$arch
 	01-decon_reg.patch
 	02-decon_dsi-BGRA-to-RGBA.patch
 	03-decon_dsi-UNBLANK-missed.patch
@@ -47,6 +45,12 @@ source="
 "
 builddir="$srcdir/android_kernel_samsung_universal9810-$_commit"
 _outdir="out"
+
+# Used internally by pmbootstrap. Don't touch.
+# TODO: Remove once minimum default pmbootstrap version supports
+# kernel packages without '_flavor' and '_config'.
+_config="{config}"
+_flavor="{flavor}"
 
 prepare() {
 	default_prepare
@@ -65,7 +69,7 @@ build() {
 
 package() {
 	downstreamkernel_package "$builddir" "$pkgdir" "$_carch" \
-		"$_flavor" "$_outdir"
+		"${pkgname#linux-}" "$_outdir"
 	install -Dm644 "$_outdir/arch/$_carch/boot"/dt.img \
 		"$pkgdir"/boot/dt.img
 }
