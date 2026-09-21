@@ -1,0 +1,45 @@
+# Reference: <https://postmarketos.org/devicepkg>
+maintainer="Aster Boese <asterboese@mailbox.org>"
+pkgname=device-motorola-harpia
+pkgdesc="Motorola Moto G4 Play"
+pkgver=13
+pkgrel=0
+url="https://postmarketos.org"
+arch="aarch64"
+license="MIT"
+depends="
+	android-tools-mkbootimg
+	firmware-motorola-harpia
+	firmware-qcom-adreno-a300
+	linux-postmarketos-qcom-msm8916
+	lk2nd-msm8916
+	msm-firmware-loader
+	postmarketos-base
+	soc-qcom-msm8916
+	soc-qcom-msm8916-rproc
+	"
+makedepends="devicepkg-dev"
+source="30-initramfs-firmware.files
+	deviceinfo
+	kernel-cmdline.conf
+	modules-initfs
+	"
+options="!archcheck !check"
+
+build() {
+	devicepkg_build $startdir $pkgname
+}
+
+package() {
+	devicepkg_package $startdir $pkgname
+
+	install -Dm644 "$srcdir"/30-initramfs-firmware.files -t \
+		"$pkgdir"/usr/share/mkinitfs/files/
+}
+
+sha512sums="
+abdf455858f019143c7babcbb80a9898b1640512277afcddac73ce6b22a967f368d109eb5b9ddebb4540f312983ca48143ae70f802acc9580382127b025f9d2a  30-initramfs-firmware.files
+9a289ed57a0e926b7ec413783d81cb742ea641c76ed4a5d3739d248c4b724ace3a28eb6143d3d520191872561d7a031fe4c68e835a55f53d8e069e3aedbf6dd8  deviceinfo
+37e1e5f8839b624ab3eb850a24ed4daeb61a651257a1fb593f49cb869323e5d1b339c831a18eb26a9d7bd0a618ea9eb2bb9bf3882133af5f2606a878e6d39c67  kernel-cmdline.conf
+525a3e20672a7dff26b885b99ee157e0ece33efa10db34c90aed45dc47d7f1c2e90d7082dc84f2724892f199b5adaca04d5864f0aa1d1e4b8ea695f840346d60  modules-initfs
+"
