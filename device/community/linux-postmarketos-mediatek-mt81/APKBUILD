@@ -3,7 +3,7 @@
 maintainer="WeirdTreeThing <bradyn127@protonmail.com>"
 pkgname=linux-postmarketos-mediatek-mt81
 pkgver=7.2.7
-pkgrel=0
+pkgrel=1
 pkgdesc="Mainline kernel for MediaTek Chromebooks with MT8183 and beyond"
 arch="aarch64"
 _flavor="${pkgname#linux-}"
@@ -58,6 +58,7 @@ source="
 	mt8186-SoC-mediatek-mt8186-correct-the-HDMI-widgets.patch
 	mt8186-drm-bridge-it6505-Add-audio-support.patch
 	mt8186-ASoC-mediatek-mt8186-make-FE-nonatomic-and-no_pcm.patch
+	mt8186-add-veluza-dts.patch
 	mtk-pmdomain.patch
 	config-$_flavor.aarch64
 "
@@ -99,6 +100,7 @@ e4eaff9d3ec1a56ae2503dd353ad57bf072219e68c26ba8b894feb90d6ccb01bd131cdde8d238451
 b2dcf3e3b9f80d185f587972ab6fc1f07e8ec7c7dbe3aa75c53ff6d3c7380ff4c3e6f394792976589d5e786923939a0860c70b486ae78925d0f122a5bf2516e0  mt8186-SoC-mediatek-mt8186-correct-the-HDMI-widgets.patch
 e09b8fc578742b0efcfb7e4419b30de39feecf3303def62576110c98e3a7101c68c78d1276f885e585ee21536df1f2474df5816f0dffa8f99ea1df1c787fe2c6  mt8186-drm-bridge-it6505-Add-audio-support.patch
 b4c005f705bbae87b93dd061b4d02f982f2dbce1c59635a02b501def1eb784b057d1555c2c11e868f81a91365dcd1c0fbecf85034b6da701011cb2b68ecb3404  mt8186-ASoC-mediatek-mt8186-make-FE-nonatomic-and-no_pcm.patch
+e0ef5dcbb04341f95d3e129532ea8a95bcc157f417979fe08dd7c52e3fed77eebb1a117116df573a92004290407e6abb04892b10d136b33b98da51de69010d4c  mt8186-add-veluza-dts.patch
 f722725cd97a98dee433fc9a713c61686e3a5d41e6b49840a8493560daece06ab2b0582b35fd4afa2c2c909b650c68f4273a28fbcd0cf9cba5ad3a262d4dbb7c  mtk-pmdomain.patch
 bcf0d0c6470cf98b957890ad8d34d2ad070da881478c801541e4d0c930c8f338c2cdc7a50c03d262eb232334359f75c2706325d215a0418b02e16dd1fa28efdb  config-postmarketos-mediatek-mt81.aarch64
 "
