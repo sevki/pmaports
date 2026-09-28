@@ -2,7 +2,7 @@
 maintainer="Aelin <aelin@postmarketos.org>"
 pkgname=linux-postmarketos-mainline
 pkgver=7.3_rc4
-pkgrel=0
+pkgrel=1
 _rel=${pkgver#*_p}
 _kver=${pkgver%_p*}
 _kver=${_kver//_/-}
@@ -53,6 +53,9 @@ makedepends="
 	sed
 	zstd
 "
+replaces="
+	linux-postmarketos-qcom-sc7180
+"
 
 # powerpc boot wrapper patches:
 # Necessary for compilation without cross GCC in PATH, cherry-picked from
@@ -92,14 +95,25 @@ prepare() {
 
 build() {
 	unset LDFLAGS
-	make ARCH="$_carch" LLVM=1 \
-		KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-$_flavor"
+	case "$CARCH" in
+		aarch64)
+			make ARCH="$_carch" LLVM=1 \
+				KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-$_flavor" \
+				Image.gz vmlinuz.efi modules dtbs
+			;;
+		*)
+		make ARCH="$_carch" LLVM=1 \
+			KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-$_flavor"
+			;;
+	esac
+
 }
 
 package() {
 	local _install
 	case "$CARCH" in
-		arm*|aarch64|riscv*) _install="zinstall dtbs_install" ;;
+		aarch64) _install="dtbs_install" ;;
+		arm|riscv*) _install="zinstall dtbs_install" ;;
 		*) _install="install" ;;
 	esac
 
@@ -114,7 +128,17 @@ package() {
 	rm -f "$pkgdir"/usr/lib/modules/*/build "$pkgdir"/usr/lib/modules/*/source
 
 	install -Dm644 "$builddir"/include/config/kernel.release \
-		"$pkgdir"/usr/share/kernel/"$_flavor"/kernel.release
+		"$pkgdir"/usr/share/kernel/$_flavor/kernel.release
+
+	case "$CARCH" in
+		aarch64)
+			install -Dm644 "$builddir"/arch/"$_carch"/boot/vmlinuz.efi \
+				"$pkgdir"/boot/linux.efi
+			install -Dm644 "$builddir"/arch/"$_carch"/boot/Image.gz \
+				"$pkgdir"/boot/vmlinuz
+			;;
+		*) ;;
+	esac
 }
 
 sha512sums="
