@@ -1,0 +1,11 @@
+#!/sbin/openrc-run
+
+command="/usr/sbin/telnetd"
+command_args="-F"
+pidfile="/run/${RC_SVCNAME}.pid"
+command_background="yes"
+
+depend() {
+	need net localmount
+	after firewall
+}
