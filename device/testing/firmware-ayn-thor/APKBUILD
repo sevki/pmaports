@@ -1,0 +1,54 @@
+maintainer="Seshan Ravikumar <seshan@sineware.ca>"
+pkgname=firmware-ayn-thor
+pkgver=0_git20260915
+_commit="88b363e67d4f730feb2c3124724d26dfaa88ce76"
+pkgrel=0
+pkgdesc="Firmware for AYN Thor"
+url="https://github.com/ROCKNIX/extra-firmware"
+arch="aarch64"
+license="proprietary"
+options="!check !strip !archcheck !tracedeps pmb:cross-native"
+
+source="
+	$pkgname-$_commit-cdsp.mbn::https://raw.githubusercontent.com/ROCKNIX/extra-firmware/$_commit/SM8550/qcom/sm8550/ayn/cdsp.mbn
+	$pkgname-$_commit-cdsp_dtb.mbn::https://raw.githubusercontent.com/ROCKNIX/extra-firmware/$_commit/SM8550/qcom/sm8550/ayn/cdsp_dtb.mbn
+	$pkgname-$_commit-adsp.mbn::https://raw.githubusercontent.com/ROCKNIX/extra-firmware/$_commit/SM8550/qcom/sm8550/ayn/thor/adsp.mbn
+	$pkgname-$_commit-adsp_dtb.mbn::https://raw.githubusercontent.com/ROCKNIX/extra-firmware/$_commit/SM8550/qcom/sm8550/ayn/thor/adsp_dtb.mbn
+	$pkgname-$_commit-adspr.jsn::https://raw.githubusercontent.com/ROCKNIX/extra-firmware/$_commit/SM8550/qcom/sm8550/ayn/thor/adspr.jsn
+	$pkgname-$_commit-adsps.jsn::https://raw.githubusercontent.com/ROCKNIX/extra-firmware/$_commit/SM8550/qcom/sm8550/ayn/thor/adsps.jsn
+	$pkgname-$_commit-adspua.jsn::https://raw.githubusercontent.com/ROCKNIX/extra-firmware/$_commit/SM8550/qcom/sm8550/ayn/thor/adspua.jsn
+	$pkgname-$_commit-aw883xx_acf.bin::https://raw.githubusercontent.com/ROCKNIX/extra-firmware/$_commit/SM8550/qcom/sm8550/ayn/thor/aw883xx_acf.bin
+	$pkgname-$_commit-battmgr.jsn::https://raw.githubusercontent.com/ROCKNIX/extra-firmware/$_commit/SM8550/qcom/sm8550/ayn/thor/battmgr.jsn
+	$pkgname-$_commit-board-2.bin::https://raw.githubusercontent.com/ROCKNIX/extra-firmware/$_commit/SM8550/ath12k/WCN7850/hw2.0/board-2.bin
+"
+
+package() {
+	local _f
+
+	for _f in cdsp.mbn cdsp_dtb.mbn; do
+		install -Dm644 "$srcdir"/"$pkgname"-"$_commit"-"$_f" \
+			"$pkgdir"/usr/lib/firmware/qcom/sm8550/ayntec/"$_f"
+	done
+
+	for _f in adsp.mbn adsp_dtb.mbn adspr.jsn adsps.jsn adspua.jsn \
+			aw883xx_acf.bin battmgr.jsn; do
+		install -Dm644 "$srcdir"/"$pkgname"-"$_commit"-"$_f" \
+			"$pkgdir"/usr/lib/firmware/qcom/sm8550/ayntec/thor/"$_f"
+	done
+
+	install -Dm644 "$srcdir"/"$pkgname"-"$_commit"-board-2.bin \
+		"$pkgdir"/usr/lib/firmware/postmarketos/ath12k/WCN7850/hw2.0/board-2.bin
+}
+
+sha512sums="
+b0f114fb1369f70e25a559cbea08066c97f3fb01a6cfd9b975c0a059ea1a870a25058cc5bf4718136ab60c7326739487370ecbcb677785721fe2dcd524a9ab50  firmware-ayn-thor-88b363e67d4f730feb2c3124724d26dfaa88ce76-cdsp.mbn
+6ac383fe7b5ea1f8f27c67c85cf6c454b8be3cb9fc79328a264384e547994883da58d67c34dc1b2b96fb5b79ce638de8d23e53c89d8d2a4f72472e7187d9da4b  firmware-ayn-thor-88b363e67d4f730feb2c3124724d26dfaa88ce76-cdsp_dtb.mbn
+d37e5262026974c6f83a3ff23fefab720efda9558e4e8706e897262cc93ff1eb5b062cdc119238ef66434bb2f63da8c753fb6f713911bef6199fcc7260e2ddfc  firmware-ayn-thor-88b363e67d4f730feb2c3124724d26dfaa88ce76-adsp.mbn
+5c1ba9d8663d28b05efda2d09e43387bc065ada02683daf2b4d926d2833a6d2158360b7ea8046fcf6d4de9268dfa21dc2ed293e9710db455c49c7857b2eac12a  firmware-ayn-thor-88b363e67d4f730feb2c3124724d26dfaa88ce76-adsp_dtb.mbn
+a026d6a9188f7cc0e1bc0b572206b5651aefbfdfd86eeed1b14151031814f9714191140dd9c9fb4ebad4da6d76bee14c0f27e2f164dba6749e8a7818d6d9578a  firmware-ayn-thor-88b363e67d4f730feb2c3124724d26dfaa88ce76-adspr.jsn
+00bdba8e7e4d7ee30806fc245f5101c7b66ec4b92833d9be99326f977d8fd4f9712b16184ea330359820768dc54758744d857d8dd7209e7f0a2231ab196435f2  firmware-ayn-thor-88b363e67d4f730feb2c3124724d26dfaa88ce76-adsps.jsn
+0d4ed22c7eb1866f43032e5cf6ac2f196f02c3dc8220c49124d8e2c52bea559f63fa505e7fa60aba2c04ab6b1f08528306d60a31bd5426e16df3eb3e86f9a483  firmware-ayn-thor-88b363e67d4f730feb2c3124724d26dfaa88ce76-adspua.jsn
+0ec7ec0acef641cbcd9091000b6d37acda6a6db962147c987d8d8a4d25829cc9d197e7182f7097e86816c93c5e62e0938c89f75e574f122cca7e36dfdd6a3223  firmware-ayn-thor-88b363e67d4f730feb2c3124724d26dfaa88ce76-aw883xx_acf.bin
+5bad891996a830b39e34ba43ad728cf69a81c5e9c5878fa57f87507a5aae61dff226ae2ff323ca82d70cee81f34ab40ac605d7568422f11b7458af56c5bc1530  firmware-ayn-thor-88b363e67d4f730feb2c3124724d26dfaa88ce76-battmgr.jsn
+c0f7a08b3ea6b86c272dcac5198af86bb81908a47173767f42492dbab85a14f08dc687f5deffc885d92f5348cf80dc07a53a2e2a8343c3c7fe1b02508b9a37c5  firmware-ayn-thor-88b363e67d4f730feb2c3124724d26dfaa88ce76-board-2.bin
+"
