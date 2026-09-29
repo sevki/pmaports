@@ -1,0 +1,5 @@
+[Libinput][0][0][top_touchscreen]
+OutputName=DSI-2
+
+[Libinput][0][0][bottom_touchscreen]
+OutputName=DSI-1

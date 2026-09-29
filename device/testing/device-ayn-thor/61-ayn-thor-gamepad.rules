@@ -1,0 +1,1 @@
+SUBSYSTEM=="input", ATTRS{phys}=="rsinput-gamepad/input0", ENV{ID_INPUT_MOUSE}="", ENV{ID_INPUT_JOYSTICK}="1"
