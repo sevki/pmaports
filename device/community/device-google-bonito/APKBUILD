@@ -3,7 +3,7 @@ maintainer="Anjandev Momi <anjan@momi.ca>"
 pkgname=device-google-bonito
 pkgdesc="Google Pixel 3a XL"
 pkgver=12
-pkgrel=0
+pkgrel=1
 url="https://postmarketos.org"
 license="MIT"
 arch="aarch64"
@@ -28,6 +28,7 @@ makedepends="devicepkg-dev"
 install="$pkgname-openrc.post-install"
 source="
 	81-libssc-google-sargo.rules
+	NetworkManager-pmf.conf
 	deviceinfo
 	hexagonrpcd-adsp-sensorspd.confd
 	modules-initfs
@@ -60,6 +61,9 @@ package() {
 	# via non-free firmware.
 	install -Dm644 "$srcdir"/q6voiced.conf \
 		-t "$pkgdir"/usr/share/q6voiced/
+
+	install -Dm644 "$srcdir"/NetworkManager-pmf.conf \
+		"$pkgdir"/usr/lib/NetworkManager/conf.d/60-ath10k-snoc-pmf.conf
 }
 
 kernel_sdc() {
@@ -95,6 +99,7 @@ plasma_camera() {
 
 sha512sums="
 e358f0565b95cd5d39dd5bc07645c6e0f94679c93b120b72bd2b6082b7f919e990a6a78e03edc0db045f8fc5e3363377c69fb8e42107298868ec319740c29210  81-libssc-google-sargo.rules
+7c490f1d4d2d777a096bbf93e2accefd113db6b02388d4d11303a4fb0a8cf8c7ce122b0160d8275e65db8edb7a7f8612952c485af8256c3d62c57fbd9f083c08  NetworkManager-pmf.conf
 bbd5032dd4d40554b3a0d44c1a35c1f1b984f347b9a3d2d4fd718aeedc2e39e8efc8243af5829dd31300c6cb49c8d5f4678364b787861f2144a88e063d90397b  deviceinfo
 b6208c254b6e44ac4f6d748a38cc6b05da0db2c90235ada2011b138b82ccc3372687df2f5ad97e885e9eea135216a3c52266a08a7f4eb323e62e799f6f82ec7b  hexagonrpcd-adsp-sensorspd.confd
 0253ff4688b789aa7cdbffb22e7ff9497aabe083adc44bf33fa52617215a1f48fc722bd61aa13a35d109eff1e69202eb599dccff029e39c0a390dcab11dd9b76  modules-initfs
