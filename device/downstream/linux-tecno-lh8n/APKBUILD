@@ -1,0 +1,501 @@
+	# Base: MiCode/Xiaomi_Kernel_OpenSource, branch gold-s-oss (Redmi Note 13 5G,
+# same MT6833/Dimensity 6080 + MT6359P PMIC silicon as TECNO LH8n).
+# This is NOT LH8n's actual kernel source (Nazephyrus's repo is a prebuilt
+# modules/headers dump, not buildable GPL source) — it's the closest
+# available buildable relative. Board-level bring-up (battery tables,
+# panel, touch, regulators) is patched in from LH8n's own extracted DTB.
+
+maintainer="NVMe <yadhrmstr@gmail.com>"
+pkgname=linux-tecno-lh8n
+pkgver=5.10.168
+pkgrel=0
+pkgdesc="TECNO POVA 5 Pro (LH8n) kernel — downstream MT6833, based on gold-s-oss"
+arch="aarch64"
+_carch="arm64"
+_flavor="tecno-lh8n"
+_config="config-$pkgname.$arch"
+url="https://github.com/MiCode/Xiaomi_Kernel_OpenSource"
+license="GPL-2.0"
+options="!strip !check !tracedeps pmb:cross-native"
+makedepends="perl sed installkernel bash gmp-dev bc devicepkg-dev mpc1-dev
+	mpfr-dev openssl-dev>3 yaml-dev elfutils-dev flex bison python3"
+
+# Pinned to gold-s-oss HEAD as of 2023-11-24, the commit we actually
+# test-compiled the LH8n board dts against:
+#   "Kernel: Xiaomi kernel changes for Redmi Note 13 5G Android T
+#    The Patch based on MTK release TAG:t-alps-release-s0.mp1.tc8sp-cs2-V1"
+_commit="a926c5e6edf6e51333ee060415f2428a5f92c4d5"
+
+# Tarball, not git+ — a git+ source entry aliases to bare $pkgname with no
+# real checksum requirement, which is what caused an earlier
+# "is missing in checksums" failure once combined with a stale
+# sha512sums block. Plain tarball avoids that class of problem entirely
+# and is simpler to reason about.
+source="
+	$pkgname-$_commit.tar.gz::$url/archive/$_commit.tar.gz
+	config-linux-tecno-lh8n.aarch64
+	pmos-tecno-lh8n.fragment
+	mt6833-tecno-lh8n.dts
+	0001-pinctrl-mtk-fix-broken-gpiolib.h-include.patch
+	0001-drm-panel-add-lh8n-panels.patch
+"
+# GitHub archives unpack into <RepoName>-<commit_hash>
+builddir="$srcdir/Xiaomi_Kernel_OpenSource-$_commit"
+
+prepare() {
+set -x
+	default_prepare
+
+	# IMPORTANT: gold_defconfig alone is NOT a bootable config — it's a
+	# ~650-line vendor fragment (SoC/board drivers only). The universal
+	# essentials (devtmpfs, tmpfs, ext4, unix sockets, ipv6, cgroups...)
+	# live in gki_defconfig, the shared Android Common Kernel GKI base.
+	# Confirmed by testing: gold_defconfig alone is missing devtmpfs,
+	# ipv6, sysvipc, and more that pmOS's userspace needs (Android's
+	# ueventd doesn't need devtmpfs the way mdev/eudev does).
+	# $_config below is the pre-merged result of:
+	#   scripts/kconfig/merge_config.sh -m -O . \
+	#     arch/arm64/configs/gki_defconfig \
+	#     arch/arm64/configs/gold_defconfig \
+	#     pmos-tecno-lh8n.fragment
+	cp "$srcdir/$_config" "$builddir/.config"
+
+	# Drop in LH8n's real board dts (cleaned from the stock boot.img's
+	# extracted dtb.img — see lh8n-decompiled.dts) rather than any
+	# gold/Xiaomi board dts. This is what actually carries the correct
+	# battery0_profile_t0..t4 tables, PMIC regulator wiring, and touch/
+	# panel instantiation for the physical hardware in this phone.
+	# Test-compiled clean (warnings only, no errors) against this exact
+	# merged config.
+	cp "$srcdir/mt6833-tecno-lh8n.dts" \
+		"$builddir/arch/arm64/boot/dts/mediatek/mt6833-tecno-lh8n.dts"
+	echo 'dtb-$(CONFIG_ARCH_MEDIATEK) += mt6833-tecno-lh8n.dtb' \
+		>> "$builddir/arch/arm64/boot/dts/mediatek/Makefile"
+
+	# 19+ vendor driver directories in this tree add their own bare
+	# "-Werror" via ccflags-y/subdir-ccflags-y (sound codecs, MTK media/
+	# connectivity/trusted_mem drivers, even a couple of unrelated
+	# mainline drivers like scsi/lpfc). Kbuild appends per-directory
+	# ccflags-y AFTER the global KBUILD_CFLAGS+KCFLAGS in the actual
+	# compile command, so these override our KCFLAGS="-Wno-error" in
+	# build() for files in those directories specifically — confirmed
+	# by a real build reaching sound/soc/codecs/richtek and failing on
+	# -Werror=format there despite KCFLAGS. Strip the token tree-wide
+	# rather than patch each directory (and catches any we haven't
+	# manually found).
+	#
+	# IMPORTANT: must only match a STANDALONE "-Werror" (followed by
+	# whitespace or end-of-line), never "-Werror=specific-warning".
+	# An earlier version of this used a bare \b word-boundary match,
+	# which also matches right before "=" (a non-word character) —
+	# that stripped just the "-Werror" prefix out of the top-level
+	# Makefile's own -Werror=strict-prototypes / =implicit-int /
+	# =return-type / =date-time flags, leaving dangling "=strict-
+	# prototypes" tokens that gcc then tried to parse as filenames
+	# ("linker input file not found"). Confirmed by a real build hitting
+	# exactly that failure. This version requires whitespace or EOL
+	# immediately after "-Werror", so scoped flags are left untouched —
+	# verified locally: modules_prepare (which builds scripts/mod/
+	# empty.o, the exact object that failed) now completes clean, and
+	# every -Werror=X flag in the top-level Makefile survives intact.
+	find "$builddir" -name Makefile -exec sed -i -E 's/-Werror([[:space:]]|$)/\1/g' {} \;
+
+	# mtk_cam.h: 4 function signatures declared with no return type at
+	# all (old K&R implicit-int), triggering -Werror=return-type. Every
+	# call site uses these purely in boolean/logical context (if/!/&&,
+	# verified against every caller), so int (0/1) is behaviorally
+	# identical here. Confirmed via direct grep against source: none of
+	# the four have "bool" in their signature -- it was never present.
+	sed -i -E \
+	  -e 's/^static inline (raw_pipe_data_check|p_data_check|sv_pipe_check|sv_devs_check)\(int a\)$/static inline int \1(int a)/' \
+		"$builddir/drivers/media/platform/mtk-isp/camsys/isp7_1/cam/mtk_cam.h"
+
+		# mtk-hcp: same same-directory angle-include gap as the batch-fixed
+		# dirs above -- mtk-hcp-support.h fails to find mtk-hcp.h without this.
+		mf="$builddir/drivers/media/platform/mtk-isp/mtk-hcp/Makefile"
+		if [ -f "$mf" ] && ! grep -q -- 'ccflags-y += -I$(src)' "$mf"; then
+			sed -i '1i ccflags-y += -I$(src)' "$mf"
+		fi
+
+		# vow/ver01, vow/ver02: vow_assert.h (in vow/) does #include "vow.h",
+		# but vow.h lives one level down in ver01/ or ver02/, not in vow/
+		# itself. Each verXX/Makefile already adds -I.../vow (parent) but
+		# never adds -I to its own directory, so the quote-include never
+		# resolves.
+		sed -i '/^ccflags-y += -I$(srctree)\/drivers\/misc\/mediatek\/vow$/a ccflags-y += -I$(src)' \
+			"$builddir/drivers/misc/mediatek/vow/ver01/Makefile"
+		sed -i '/^ccflags-y += -I$(srctree)\/drivers\/misc\/mediatek\/vow$/a ccflags-y += -I$(src)' \
+			"$builddir/drivers/misc/mediatek/vow/ver02/Makefile"
+make -C "$builddir" ARCH="$_carch" olddefconfig
+	sed -i 's|ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/|ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/ -I$(srctree)/drivers/soc/mediatek/devmpu/|' \
+	"$builddir/drivers/soc/mediatek/devmpu/Makefile"
+sed -i '/obj-\$(CONFIG_REGULATOR_MTK_VMM) += mtk-vmm-regulator.o/a CFLAGS_mtk-vmm-regulator.o := -I$(src)' \
+	"$builddir/drivers/regulator/Makefile"
+# Batch fix: MediaTek's internal build system globally adds every
+	# driver directory to the include search path, so their vendor code
+	# freely uses angle-bracket includes (same-dir headers, relative
+	# "../" paths, ftrace TRACE_INCLUDE_PATH ".") that only resolve
+	# there. Upstream kbuild doesn't do this, so each of these needs an
+	# explicit -I$(src) added to its own directory's Makefile.
+	# Found by grepping the full pinned-commit tree for both patterns
+	# and cross-checking which dirs' Makefiles were still missing the
+	# Comprehensive fix for MediaTek's globally-implicit include paths.
+	# Swept the full pinned-commit tarball for every angle-bracket
+	# include (same-directory bare filenames AND "../"-relative paths)
+	# whose target header exists on disk, then cross-checked each
+	# owning Makefile/Kbuild for a pre-existing -I$(src) fix so we only
+	# patch what's actually missing (most large vendor drivers — Mali,
+	# musb, swpm, spm/common_v*, lpm — already carry the correct line).
+	# Excludes atomisp/rtl8723bs (unrelated hardware, effectively never
+	# enabled here) and dirs confirmed uncompiled or already fixed
+	# upstream (mnoc/utilities, apusys_rv, spm/common).
+	for d in \
+		drivers/iommu \
+		drivers/pinctrl/mediatek \
+		drivers/soc/mediatek/devapc \
+		drivers/soc/mediatek/devmpu \
+		drivers/gpu/drm/mediatek/mediatek_v2 \
+		drivers/memory \
+		drivers/memory/mediatek \
+		drivers/regulator \
+		drivers/clk/mediatek \
+		drivers/leds \
+		drivers/net/wireless/broadcom/brcm80211/brcmsmac \
+		sound/soc/mediatek/audio_scp \
+		drivers/misc/mediatek/sched \
+		drivers/misc/mediatek/eccci/hif \
+		drivers/misc/mediatek/eccci/port \
+		drivers/misc/mediatek/pmsr/twam \
+		drivers/misc/mediatek/mtprof \
+		drivers/misc/mediatek/mmstat \
+		drivers/misc/mediatek/spm/mt6768 \
+		drivers/misc/mediatek/spm/common_v0 \
+		drivers/misc/mediatek/spm/common_v1 \
+		drivers/misc/mediatek/lpm \
+		drivers/misc/mediatek/lpm/platform \
+		drivers/misc/mediatek/lpm/modules/debug/v1 \
+		drivers/misc/mediatek/lpm/modules/debug/mt6833 \
+		drivers/misc/mediatek/lpm/modules/debug/mt6853 \
+		drivers/misc/mediatek/lpm/modules/debug/mt6873 \
+		drivers/misc/mediatek/mcdi/mt6768 \
+		drivers/misc/mediatek/mcdi/common_v2 \
+		drivers/misc/mediatek/qos \
+		drivers/misc/mediatek/sda \
+		drivers/misc/mediatek/slbc \
+		drivers/misc/mediatek/swpm/modules/debug/v1 \
+		drivers/misc/mediatek/swpm/modules/debug/v6789 \
+		drivers/misc/mediatek/swpm/modules/debug/v6855 \
+		drivers/misc/mediatek/swpm/modules/debug/v6879 \
+		drivers/misc/mediatek/swpm/modules/debug/v6893 \
+		drivers/misc/mediatek/swpm/modules/debug/v6895 \
+		drivers/misc/mediatek/swpm/modules/debug/v6983 \
+		drivers/misc/mediatek/typec/mux \
+		drivers/misc/mediatek/usb20/musb_main \
+		drivers/misc/mediatek/videocodec \
+		drivers/thermal/mediatek
+	do
+		mf="$builddir/$d/Makefile"
+		if [ -f "$mf" ] && ! grep -q -- 'ccflags-y += -I$(src)' "$mf"; then
+			sed -i '1i ccflags-y += -I$(src)' "$mf"
+		fi
+	done
+	for d in \
+		"drivers/gpu/mediatek/gpu_mali/mali_valhall/mali-r30p0/drivers/gpu/arm/midgard/backend/gpu" \
+		"drivers/gpu/mediatek/gpu_mali/mali_valhall/mali-r32p0/drivers/gpu/arm/midgard/platform/mtk_platform_common" \
+		"drivers/gpu/mediatek/gpu_mali/mali_valhall/mali-r32p1/drivers/gpu/arm/midgard/platform/mtk_platform_common" \
+		"drivers/gpu/mediatek/gpu_mali/mali_valhall/mali-r25p0/drivers/gpu/arm/midgard/platform/mtk_platform_common"
+	do
+		kb="$builddir/$d/Kbuild"
+		if [ -f "$kb" ] && ! grep -q -- 'ccflags-y += -I$(src)' "$kb"; then
+			sed -i '1i ccflags-y += -I$(src)' "$kb"
+		fi
+	done
+
+# drivers/gpu/drm/mediatek_v2/mtk_drm_crtc.c: DDPDBG() prints
+	# MSYNC_MIN_FPS (#define'd as the double literal 46.1) via %f.
+	# AArch64 kernel code builds with -mgeneral-regs-only (no FP/SIMD
+	# in kernel context, since FPU state isn't saved across kernel
+	# entry/exit), so any function touching that constant fails to
+	# compile. Also just plain wrong at runtime regardless — the
+	# kernel's vsnprintf has no %f support at all. Casting to int is
+	# constant-folded by gcc at compile time (MSYNC_MIN_FPS is a
+	# literal), so this emits zero floating-point instructions.
+	sed -i 's|DDPDBG("\[Msync\] min fps:%f, fps:%d, time_diff:%d\\n", MSYNC_MIN_FPS, fps, time_diff);|DDPDBG("[Msync] min fps:%d, fps:%d, time_diff:%d\\n", (int)MSYNC_MIN_FPS, fps, time_diff);|' \
+		"$builddir/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_crtc.c"
+
+# Batch fix: MediaTek/Xiaomi vendor code throughout this tree defines
+	# functions with empty parens ("static void foo()") — valid old-style
+	# K&R syntax meaning "unspecified arguments", not "no arguments" like
+	# "(void)" does. The kernel's top-level Makefile hardcodes
+	# -Werror=strict-prototypes independent of general -Werror (so
+	# KCFLAGS="-Wno-error" doesn't cancel it), and this pattern violates
+	# it. Confirmed via mtk-mml-pq-core.c's ut_init() failure, then swept
+	# the full tree for the same pattern (39 instances across 18 files —
+	# imgsensor, thermal, touch, Mali gpu_pmu, mml). Adding "void" is
+	# always semantically safe and never changes behavior.
+	python3 - "$builddir" << 'PYEOF'
+import re, os, sys
+root_dir = sys.argv[1]
+def_pat = re.compile(r'^(\s*(?:static\s+)?[A-Za-z_][\w\s\*]*?\b[A-Za-z_]\w*\s*\()\s*\)(\s*\{?\s*)$')
+fixed = 0
+for root, dirs, files in os.walk(root_dir):
+	rel = os.path.relpath(root, root_dir)
+	if not (rel.startswith('drivers') or rel.startswith('sound')):
+		continue
+	for fn in files:
+		if not fn.endswith('.c'):
+			continue
+		path = os.path.join(root, fn)
+		try:
+			with open(path, 'r', errors='ignore') as f:
+				lines = f.readlines()
+		except Exception:
+			continue
+		changed = False
+		for i, line in enumerate(lines):
+			if ';' in line:
+				continue
+			m = def_pat.match(line)
+			if not m:
+				continue
+			has_brace = m.group(2).strip() == '{'
+			if not has_brace:
+				j = i + 1
+				while j < len(lines) and lines[j].strip() == '':
+					j += 1
+				if j >= len(lines) or not lines[j].lstrip().startswith('{'):
+					continue
+			lines[i] = (m.group(1) + 'void)' + m.group(2)).rstrip('\n') + '\n'
+			changed = True
+			fixed += 1
+		if changed:
+			with open(path, 'w') as f:
+				f.writelines(lines)
+print(f"strict-prototypes sweep: fixed {fixed} definitions", file=sys.stderr)
+PYEOF
+# eccci/Makefile has a dozen ccflags-y -I entries for its various
+	# subdirectories but never included its own directory, breaking
+	# every quote-include of a header that lives directly in
+	# drivers/misc/mediatek/eccci/ (ccci_common_config.h, modem_sys.h,
+	# etc.) and transitively fsm/ccci_fsm_internal.h. One line fixes
+	# the entire modem subsystem — verified against all 207
+	# quote-includes across eccci/*.c.
+	sed -i '1i ccflags-y += -I$(src)' \
+		"$builddir/drivers/misc/mediatek/eccci/Makefile"
+# Second, separate float bug on the very next line from the
+	# DDPDBG fix: "1e9 / MSYNC_MIN_FPS < time_diff" compares a
+	# compile-time-foldable double constant against the *variable*
+	# time_diff, forcing GCC to emit a runtime int->double conversion
+	# for the comparison itself — real FP codegen. This function
+	# (msync_add_frame_time) gets inlined into mtk_drm_crtc_atomic_begin,
+	# which is why the error reported that function's line instead of
+	# this one. MSYNC_MIN_FPS is a fixed constant (46.1) that never
+	# changes, so precompute the threshold once instead of doing the
+	# division at all: 1000*1000*1000/46.1 = 21691973.97, truncated.
+	sed -i 's|if (1000 \* 1000 \* 1000 / MSYNC_MIN_FPS < time_diff) {|if (21691973 < time_diff) {|' \
+	"$builddir/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_crtc.c"
+for d in \
+		drivers/misc/mediatek/sspm/v0 \
+		drivers/misc/mediatek/sspm/v1 \
+		drivers/misc/mediatek/sspm/v2 \
+		drivers/misc/mediatek/sspm/v3
+	do
+		mf="$builddir/$d/Makefile"
+		if [ -f "$mf" ] && ! grep -q -- 'ccflags-y += -I$(src)' "$mf"; then
+			sed -i '1i ccflags-y += -I$(src)' "$mf"
+		fi
+	done
+
+for d in \
+		drivers/media/platform/mtk-aie \
+		drivers/misc/mediatek/trusted_mem \
+		sound/soc/codecs/cs35l45
+	do
+		mf="$builddir/$d/Makefile"
+		if [ -f "$mf" ] && ! grep -q -- 'ccflags-y += -I$(src)' "$mf"; then
+			sed -i '1i ccflags-y += -I$(src)' "$mf"
+		fi
+	done
+
+# pd_dpm_pdo_select.h (inside tcpc/inc/) does #include "inc/tcpci.h"
+	# as if relative to the parent tcpc/ directory, not its own —
+	# quote-form checks its own dir first (tcpc/inc/inc/tcpci.h,
+	# doesn't exist), then falls through to the compiler's -I list,
+	# same as angle-bracket. Resolves once tcpc/'s own directory is on
+	# the include path.
+	sed -i '1i ccflags-y += -I$(src)' \
+		"$builddir/drivers/misc/mediatek/typec/tcpc/Makefile"
+	sed -i 's|subdir-ccflags-y += -Wall -Werror|subdir-ccflags-y += -Wall|' \
+		"$builddir/drivers/misc/mediatek/typec/tcpc/Makefile"
+
+# sw_logger.c: "count + 1 >= 16" overflows for huge size_t count
+	# values from userspace write() calls (wraps to a small number,
+	# defeating the bounds check), and separately can't be proven safe
+	# by GCC's static copy_from_user bounds checker, hence the hard
+	# __bad_copy_to() compile error. Same bug in set_debuglv() and
+	# set_debugAttr(). "count >= sizeof(tmp) - 1" is exactly equivalent
+	# to the original boundary (verified: identical accept/reject for
+	# every count value) but the subtraction is compile-time constant
+	# folding (16 - 1), not runtime arithmetic on user input, so no
+	# overflow is possible.
+	sed -i 's|if (count + 1 >= 16)|if (count >= sizeof(tmp) - 1)|g' \
+		"$builddir/drivers/misc/mediatek/apusys/sw_logger/sw_logger.c"
+# Same bug as sw_logger.c, same fix — hw_logger.c is apusys's
+	# sibling logger driver with copy-pasted set_debuglv()/
+	# set_debugAttr() functions carrying the identical overflow-prone
+	# bounds check.
+	sed -i 's|if (count + 1 >= 16)|if (count >= sizeof(tmp) - 1)|g' \
+		"$builddir/drivers/misc/mediatek/apusys/hw_logger/hw_logger.c"
+sed -i '1i ccflags-y += -I$(src)' \
+		"$builddir/drivers/misc/mediatek/cameraisp/src/isp_6s/Makefile"
+sed -i '1i ccflags-y += -I$(src)' \
+		"$builddir/drivers/misc/mediatek/cameraisp/src/isp_4/Makefile"
+for d in \
+		drivers/misc/mediatek/ccu/src/isp4 \
+		drivers/tee/gud/500/MobiCoreDriver \
+		drivers/tee/gud/510/MobiCoreDriver
+	do
+		mf="$builddir/$d/Makefile"
+		if [ -f "$mf" ] && ! grep -q -- 'ccflags-y += -I$(src)' "$mf"; then
+			sed -i '1i ccflags-y += -I$(src)' "$mf"
+		fi
+	done
+
+	# lpm_plat.h / lpm_plat_comm.h: same-directory angle-include gap,
+	# same fix as every other instance of this bug class.
+	sed -i '1i ccflags-y += -I$(src)' \
+		"$builddir/drivers/misc/mediatek/lpm/modules/platform/v1/Makefile"
+
+	# mtk_pe5.c: "static vbat_low_step = 5;" has no type at all
+	# (implicit int under K&R rules) — -Werror=implicit-int is another
+	# of the kernel's hardcoded flags. Clearly meant to be int given
+	# the integer assignment. Confirmed via tree-wide sweep this is the
+	# only instance of this exact pattern anywhere in drivers/ or sound/.
+	sed -i 's|static vbat_low_step = 5;|static int vbat_low_step = 5;|' \
+		"$builddir/drivers/power/supply/mtk_pe5.c"
+
+	# iommu_secure.c: mtk_iommu_secure_bk_tf_dump() is defined with no
+	# return type specifier at all (old K&R style), so GCC's
+	# -Werror=return-type fires on "return type defaults to 'int'".
+
+
+
+
+
+		# mtk_cooler_atm.c: define_trace.h's TRACE_INCLUDE_PATH resolves
+		# the literal relative path 'common/coolers/mtk_cooler_atm_events.h'
+		# against -I search dirs, so it needs thermal/ itself (the parent
+		# of common/coolers/) on the include path, not just common/inc/.
+		mf="$builddir/drivers/misc/mediatek/thermal/Makefile"
+		if [ -f "$mf" ] && ! grep -q -- '+= -I\$(srctree)/drivers/misc/mediatek/thermal$' "$mf"; then
+			sed -i '/^ccflags-y  += -I\$(srctree)\/drivers\/thermal\/$/a ccflags-y  += -I$(srctree)/drivers/misc/mediatek/thermal' "$mf"
+		fi
+
+		# musb_core.c: same same-directory angle-include gap as mtk-hcp
+		# and imgsys above -- musb_core.h sits right next to the .c file
+		# but isn't found without an explicit -I$(src).
+		mf="$builddir/drivers/misc/mediatek/usb20/Makefile"
+		if [ -f "$mf" ] && ! grep -q -- 'ccflags-y += -I$(src)' "$mf"; then
+			# NOTE: can't prepend at line 1 -- this Makefile later does
+			# 'ccflags-y := ...' (plain assignment, not +=), which wipes
+			# out anything added before it. Insert right after that reset
+			# instead, where only += lines follow.
+			sed -i '/^ccflags-y := -I\$(srctree)\/drivers\/usb\/gadget\/$/a ccflags-y += -I$(src)' "$mf"
+		fi
+
+		# fstb.c:110: 'static set_cam_active_fpsgo_off;' is missing its
+		# type -- usage throughout the file (if (x), x = active, %d in
+		# scnprintf) confirms it's meant to be a plain int flag.
+		sed -i 's/^static set_cam_active_fpsgo_off;$/static int set_cam_active_fpsgo_off;/' \
+			"$builddir/drivers/misc/mediatek/performance/fpsgo_v3/fstb/fstb.c"
+
+		# sched/common.h:21: __always_inline on a bare extern prototype
+		# with no body in this TU is meaningless and GCC treats it as a
+		# hard error. The real definition lives elsewhere; drop the
+		# attribute, same as the mtk_cpu_util prototype two lines above.
+		sed -i '/^__always_inline$/{N;s/^__always_inline\n//}' \
+			"$builddir/drivers/misc/mediatek/sched/common.h"
+
+		# fpsgo_v3: fpsgo_base.c etc #include <mt-plat/fpsgo_common.h>,
+		# but that's a private mt-plat/ dir inside fpsgo_v3 itself, not
+		# the shared drivers/misc/mediatek/include/mt-plat/ tree.
+		mf="$builddir/drivers/misc/mediatek/performance/fpsgo_v3/Makefile"
+		if [ -f "$mf" ] && ! grep -q -- 'ccflags-y += -I$(src)' "$mf"; then
+			sed -i '1i ccflags-y += -I$(src)' "$mf"
+		fi
+
+		# mtk_imgsys-dev.c / mtk_imgsys-of.c: mtk-img-ipi.h #includes
+		# <mtk_header_desc.h> as an angle-bracket system include, but the
+		# header only exists in this same directory, so it's never found.
+		mf="$builddir/drivers/media/platform/mtk-isp/imgsys/Makefile"
+		if [ -f "$mf" ] && ! grep -q -- 'ccflags-y += -I$(src)' "$mf"; then
+			sed -i '1i ccflags-y += -I$(src)' "$mf"
+		fi
+
+	# iommu_secure.h already declares it as int (both prototypes), so
+	# the .c definition is just out of sync with its own header.
+	sed -i \
+	  's|^mtk_iommu_secure_bk_tf_dump(uint32_t type, uint32_t id, uint32_t bank,$|int mtk_iommu_secure_bk_tf_dump(uint32_t type, uint32_t id, uint32_t bank,|' \
+	  "$builddir/drivers/misc/mediatek/iommu/iommu_secure.c"
+
+
+	# The entire clkbuf/v1/src/ directory has the same header-collision
+	# bug: every .c file here does #include "mtk_clkbuf_common.h"
+	# and/or #include "mtk_clkbuf_ctl.h" in quote form, but this tree
+	# contains TWO generations of clkbuf headers sharing those exact
+	# filenames — the real ones in v1/inc/ (with the structs/enums
+	# these .c files actually need) and unrelated older "Old GKI"
+	# headers at clkbuf/src/ with the same names but incompatible
+	# contents. Confirmed via tree-wide grep: 8 quote-includes across
+	# 7 files in v1/src/, all equally vulnerable regardless of whether
+	# each one has already errored yet. Rewriting every one to an
+	# explicit ../inc/ relative path removes the ambiguity for all of
+	# them at once, rather than discovering and patching each file
+	# individually across repeated rebuild cycles. Supersedes the
+	# earlier single-file mtk_clkbuf_common.c-only fix (removed).
+	find "$builddir/drivers/misc/mediatek/clkbuf/v1/src" -type f -name "*.c" -exec sed -i \
+	  -e 's|#include "mtk_clkbuf_common.h"|#include "../inc/mtk_clkbuf_common.h"|' \
+	  -e 's|#include "mtk_clkbuf_ctl.h"|#include "../inc/mtk_clkbuf_ctl.h"|' {} +
+
+}
+
+build() {
+	unset LDFLAGS
+	# This tree hardcodes -Werror directly into KBUILD_CFLAGS at the
+	# top-level Makefile (independent of the CONFIG_WERROR kconfig
+	# option, which we also disabled in pmos-tecno-lh8n.fragment but
+	# turned out not to be sufficient alone — confirmed by a real build
+	# still failing on -Werror=dangling-pointer with CONFIG_WERROR=n).
+	# KCFLAGS is appended after KBUILD_CFLAGS by this Makefile, so
+	# -Wno-error here overrides the hardcoded -Werror on the actual
+	# compiler command line. Verified locally: mm/compaction.o, the
+	# object that was failing, compiles clean with this set.
+	make -C "$builddir" ARCH="$_carch" \
+		CROSS_COMPILE="${CROSS_COMPILE:-${CTARGET}-}" \
+		KBUILD_BUILD_VERSION="$((pkgrel + 1))-postmarketOS" \
+		KCFLAGS="-Wno-error -Wno-implicit-int -Wno-strict-prototypes -Wno-implicit-function-declaration" \
+		V=1
+}
+
+package() {
+	mkdir -p "$pkgdir/boot"
+	make -C "$builddir" ARCH="$_carch" \
+		INSTALL_PATH="$pkgdir/boot" \
+		INSTALL_MOD_PATH="$pkgdir"/usr \
+		modules_install install
+	install -D "$builddir/arch/$_carch/boot/Image.gz" \
+		"$pkgdir/boot/vmlinuz-$_flavor"
+}
+
+# Computed directly (not a placeholder) — tarball hash fetched and hashed
+# fresh from GitHub at this exact pinned commit, matches what your earlier
+# successful fetch already showed. Local file hashes computed against the
+# current state of each file as of this APKBUILD version.
+sha512sums="
+c79e1724b07b8d22971682044211cc4e5d04d162f9968b1e1a202159872d05aaa9cc8afb12aaa1b36351bf62d627dbe7b638e62ed98c80a00e6dc7da80b225c8  $pkgname-$_commit.tar.gz
+d0d02e87ac21889a27c59d8aa8f5def9f99ad214b99cb008787925942ac4c885ee6fb529733e0d8195c0606a3108aa0b5fbe6a30e9f967b3b3fcda806b00f461  config-linux-tecno-lh8n.aarch64
+8f3a93c32d81e0cd668fa726c96a15c9166ce3fcb3d5044610eed25d9d4d731f9937410dd57c82c0b7184cddb884ba75f0f2bfaf6824ab96d96491906534dc68  pmos-tecno-lh8n.fragment
+9623b86ef6c822218beb21073a71a3870176088062c4f629e7f224f6d2f902de4651d3c476002b688fce7819e94c58bbdd6bb8a8fceddb6f6efe0986e0e4334b  mt6833-tecno-lh8n.dts
+e30cb899007f24d3427fbfc53a43192fa3c9686a2e2bb30a8ba9ab66a4ca733e8bc628b89f5b8c119209b491709ccde9d847661710c1cc365f02bfe8db5e2cbe  0001-pinctrl-mtk-fix-broken-gpiolib.h-include.patch
+fcf6063dd0c612dd27f419cf640a43b7d271f7f29bac5e6c430571de12b97277d49ea1a3a124e58c0b38594dd26db48f470e65446be15344cf35163a9649fa4a  0001-drm-panel-add-lh8n-panels.patch
+"

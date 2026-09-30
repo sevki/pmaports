@@ -1,0 +1,28 @@
+# Reference: <https://postmarketos.org/deviceinfo>
+# Please use double quotes only. You can source this file in shell
+# scripts.
+# Header v4 device: boot.img holds only the kernel and ramdisk. The DTB
+# and base cmdline come from the stock vendor_boot, so no dtb or
+# cmdline properties are set here.
+
+deviceinfo_format_version="0"
+deviceinfo_name="Tecno POVA 5 Pro"
+deviceinfo_manufacturer="Tecno"
+deviceinfo_codename="tecno-lh8n"
+deviceinfo_year="2023"
+deviceinfo_arch="aarch64"
+
+# Device related
+deviceinfo_chassis="handset"
+
+# Bootloader related
+deviceinfo_flash_method="fastboot"
+deviceinfo_generate_bootimg="true"
+deviceinfo_flash_pagesize="4096"
+deviceinfo_header_version="4"
+
+# --- Not detectable from a boot.img alone; added from TWRP's
+# BoardConfig.mk. Verify these against the real partition table
+# (fastboot getvar all, or TWRP's fstab) rather than trusting blindly.
+# BOARD_TECNO_DYNAMIC_PARTITIONS_PARTITION_LIST := system vendor product system_ext
+deviceinfo_super_partitions="system vendor product system_ext"
