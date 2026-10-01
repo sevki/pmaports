@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodically refresh GNSS assistance data (A-GPS/XTRA)
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=12h
+Persistent=true
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

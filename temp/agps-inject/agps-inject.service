@@ -1,0 +1,16 @@
+[Unit]
+Description=Download and inject GNSS assistance data (A-GPS/XTRA)
+After=ModemManager.service network-online.target
+Wants=network-online.target
+Requisite=ModemManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/agps-inject
+# Retry if the data connection is not up yet
+Restart=on-failure
+RestartSec=2min
+CacheDirectory=agps
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes

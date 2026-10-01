@@ -1,0 +1,54 @@
+#!/bin/sh
+# agps-inject: download XTRA assistance data and inject it via ModemManager
+set -eu
+
+CACHE_DIR="/var/cache/agps"
+MAX_AGE_HOURS="${AGPS_MAX_AGE_HOURS:-24}"
+
+log() { echo "agps-inject: $*"; }
+
+# Wait for a modem with an available location interface (up to 60s)
+i=0
+while ! mmcli -m any --location-status >/dev/null 2>&1; do
+    i=$((i + 1))
+    [ "$i" -ge 12 ] && { log "no modem with location support found, giving up"; exit 0; }
+    sleep 5
+done
+
+# Extract assistance server URLs exposed by the modem
+SERVERS=$(mmcli -m any --location-status | grep -oE 'https?://[^[:space:],]+' || true)
+if [ -z "$SERVERS" ]; then
+    log "modem does not expose assistance data servers (no xtra support?)"
+    exit 0
+fi
+
+mkdir -p "$CACHE_DIR"
+FILE="$CACHE_DIR/$(basename "$(echo "$SERVERS" | head -n1)")"
+
+# Download if cache is missing or older than MAX_AGE_HOURS
+if [ ! -f "$FILE" ] || [ -n "$(find "$FILE" -mmin +$((MAX_AGE_HOURS * 60)) 2>/dev/null)" ]; then
+    ok=0
+    for url in $SERVERS; do
+        log "downloading $url"
+        if wget -q -T 30 -O "$FILE.tmp" "$url"; then
+            mv "$FILE.tmp" "$FILE"
+            ok=1
+            break
+        fi
+        rm -f "$FILE.tmp"
+    done
+    if [ "$ok" -ne 1 ]; then
+        if [ -f "$FILE" ]; then
+            log "download failed, falling back to cached file"
+        else
+            log "download failed, no cache available"
+            exit 1
+        fi
+    fi
+else
+    log "using cached assistance data ($FILE)"
+fi
+
+log "injecting $(wc -c < "$FILE") bytes"
+mmcli -m any --location-inject-assistance-data="$FILE"
+log "done"
