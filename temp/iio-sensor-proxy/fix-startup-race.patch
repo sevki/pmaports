@@ -1,0 +1,46 @@
+From e21ca257d742c69b757aca5a4d2c3b7787306034 Mon Sep 17 00:00:00 2001
+From: Jan-Michael Brummer <jan.brummer@tabos.org>
+Date: Sat, 29 Aug 2026 08:17:07 +0200
+Subject: [PATCH] iio-sensor-proxy.c: Fix race condition during boot
+
+Claims can be processed while sensors are still being discovered, take
+care of it.
+
+Tested and verified on OnePlus 6T and Fairphone 5.
+
+Fixes:
+https://gitlab.freedesktop.org/hadess/iio-sensor-proxy/-/work_items/437
+---
+ src/iio-sensor-proxy.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/src/iio-sensor-proxy.c b/src/iio-sensor-proxy.c
+index 9c7e8cd..59257cc 100644
+--- a/src/iio-sensor-proxy.c
++++ b/src/iio-sensor-proxy.c
+@@ -779,6 +779,22 @@ name_acquired_handler (GDBusConnection *connection,
+ 		}
+ 
+ 		DEVICE_FOR_TYPE(i) = sensor_device;
++
++		/*
++		 * Claims can be processed while sensors are still being discovered:
++		 * the D-Bus name is owned before find_sensors() runs and sensor
++		 * initialization blocks (and thereby pumps) the main loop, allowing
++		 * queued method calls to be dispatched mid-initialization. Such claims
++		 * are recorded as clients, but polling was never started, leaving the
++		 * sensor permanently disabled even though clients expect readings.
++		 * Start polling for every sensor that already has clients here.
++		 */
++		if (g_hash_table_size (data->clients[i]) == 0)
++			continue;
++
++		g_debug ("Sensor type %s has clients registered before initialization finished, starting polling",
++			 driver_type_to_str (i));
++		driver_set_polling (sensor_device, TRUE);
+ 	}
+ 
+ 	if (!any_sensors_left (data))
+-- 
+GitLab
+
