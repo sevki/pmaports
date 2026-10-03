@@ -1,6 +1,6 @@
 # Reference: <https://postmarketos.org/vendorkernel>
 # Kernel config based on: arch/arm64/configs/TP707A_64_defconfig
-maintainer=""
+maintainer="yabloch-is-here <el.komissarov@gmail.com>"
 pkgname=linux-neffos-tp707a
 pkgver=4.4.95
 pkgrel=0
