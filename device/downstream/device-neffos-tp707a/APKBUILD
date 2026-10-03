@@ -1,5 +1,5 @@
 # Reference: <https://postmarketos.org/devicepkg>
-maintainer=""
+maintainer="yabloch-is-here <el.komissarov@gmail.com>"
 pkgname=device-neffos-tp707a
 pkgver=1
 pkgrel=0
