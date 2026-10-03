@@ -1,0 +1,77 @@
+# Reference: <https://postmarketos.org/vendorkernel>
+# Kernel config based on: arch/arm64/configs/TP707A_64_defconfig
+maintainer=""
+pkgname=linux-neffos-tp707a
+pkgver=4.4.95
+pkgrel=0
+_commit=ebae84875ae6cf5fcbdd22aa9e238c8c491076af
+pkgdesc="Neffos C9 kernel fork"
+arch="aarch64"
+url="https://kernel.org"
+license="GPL-2.0-only"
+makedepends="
+	bash
+	bc
+	bison
+	devicepkg-dev
+	findutils
+	flex
+	openssl-dev
+	perl
+	python3
+	u-boot-tools
+	unzip
+	gcc6
+	ncurses
+	"
+if [ "${CC:0:5}" != "gcc6-" ]; then
+	CC="gcc6-$CC"
+	HOSTCC="gcc6-gcc"
+	CROSS_COMPILE="gcc6-$CROSS_COMPILE"
+fi
+
+source="
+	$pkgname-$_commit.tar.gz::https://github.com/plextar/android_kernel_neffos_tp707a/archive/$_commit.tar.gz
+	config-${pkgname#linux-}.$arch
+	fix-check-lxdialog.patch
+	"
+builddir="$srcdir/android_kernel_neffos_tp707a-$_commit"
+options="
+	!check
+	!strip
+	!tracedeps
+	pmb:cross-native
+	"
+_outdir="out"
+
+_carch="arm64"
+
+# Used internally by pmbootstrap. Don't touch.
+# TODO: Remove once minimum default pmbootstrap version supports
+# kernel packages without '_flavor' and '_config'.
+_config="config-${pkgname#linux-}.$arch"
+_flavor="${pkgname#linux-}"
+
+prepare() {
+	default_prepare
+	. downstreamkernel_prepare
+}
+
+build() {
+	unset LDFLAGS
+	make O="$_outdir" ARCH="$_carch" CC="${CC:-gcc}" \
+		HOSTCFLAGS="-fcommon" \
+		KCFLAGS="-fcommon" \
+		KBUILD_BUILD_VERSION="$((pkgrel + 1 ))"-postmarketOS
+}
+
+package() {
+	downstreamkernel_package "$builddir" "$pkgdir" "$_carch" \
+		"${pkgname#linux-}" "$_outdir"
+}
+
+sha512sums="
+fa7e4448a93d3db25d1a3ab00209b01ea8c651ee9873f29df120222075a8b0d96f5a982aebf75d7a1899ad5d41571f75e2fcfc806b6726ef7259d4af3374bdab  linux-neffos-tp707a-ebae84875ae6cf5fcbdd22aa9e238c8c491076af.tar.gz
+3cabcc7fcc8d98f5884dc241d2d59a6a4db4d93e7d4ef77b3e624bb32fd4ce3a6970fd6ef07dfd8f90441d41c13fa7d6bcf9907ce65b9ffb06e717321889f615  config-neffos-tp707a.aarch64
+182be3c596b9cc267ac108d7cf03fc8c328ccc6b36770800e4dcedea8d1bb65e3f5eacf590c2948f58b1418cc60a1670ba77dde8c259e428d158c31b6e1dbaf5  fix-check-lxdialog.patch
+"
