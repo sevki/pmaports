@@ -18,6 +18,7 @@ depends="
 makedepends="devicepkg-dev"
 source="
 	deviceinfo
+	kernel-cmdline.conf
 	"
 options="!archcheck !check"
 
@@ -30,5 +31,6 @@ package() {
 }
 
 sha512sums="
-6c29d193771aabf2a0670b2328c9fcbeba39eade96cce72d9e8313adaa2bfb9dd06216578642c3e58724d86ea8e402e1e27fb0b7a10b6f4752b9f2bcd425aa41  deviceinfo
+8c1aa61064ecc3bfaaac7fe5e12bb808969efd79f34445dbcd0260cc4b49bdcbb511c8104d60ad6f1be4d4b8d5574960a3b2532672401cc8ef781feb95031d3e  deviceinfo
+70972ee48c9d8eb687ac6b2cf044929e867128fc6a464cd10616b4c42f051945707d100c592c254f09a02bc644604d8d041816d3ce24f0ca0eba70ca66ab40ee  kernel-cmdline.conf
 "
