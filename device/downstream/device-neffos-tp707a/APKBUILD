@@ -1,0 +1,36 @@
+# Reference: <https://postmarketos.org/devicepkg>
+maintainer="yabloch-is-here <el.komissarov@gmail.com>"
+pkgname=device-neffos-tp707a
+pkgver=1
+pkgrel=0
+pkgdesc="Neffos C9"
+url="https://postmarketos.org"
+arch="aarch64"
+license="MIT"
+depends="
+	android-tools-mkbootimg
+	linux-neffos-tp707a
+	postmarketos-base
+	postmarketos-base-downstream
+	msm-fb-refresher
+	xf86-video-fbdev
+	"
+makedepends="devicepkg-dev"
+source="
+	deviceinfo
+	kernel-cmdline.conf
+	"
+options="!archcheck !check"
+
+build() {
+	devicepkg_build $startdir $pkgname
+}
+
+package() {
+	devicepkg_package $startdir $pkgname
+}
+
+sha512sums="
+4d9f0579697db6fc0f8390aec512af488dbeec037b3a1187b7566015bd45fd5ffada55c6e02bfd1c954cc41797d5142db671f9e234c0b34598ab2623b476983d  deviceinfo
+70972ee48c9d8eb687ac6b2cf044929e867128fc6a464cd10616b4c42f051945707d100c592c254f09a02bc644604d8d041816d3ce24f0ca0eba70ca66ab40ee  kernel-cmdline.conf
+"
