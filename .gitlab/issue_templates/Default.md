@@ -1,10 +1,10 @@
 <!--
-	Thank you for using postmarketOS! In order to speed up process of resolving your issue,
-	we would like you to fill in the following form.
+    Thank you for using Nura! In order to speed up process of resolving your
+    issue, we would like you to fill in the following form.
 
 	*** NOTE FOR CONFIDENTIAL ISSUES: ***
 	A lot of people can read confidential pmaports issues! If you want to
-	submit something that only the postmarketOS Core Team can see, write to
+	submit something that only the Nura team can see, write to
 		team@postmarketos.org
 	instead of opening an issue here!
 -->
@@ -22,13 +22,12 @@
 	PinePhone: which revision exactly? See https://wiki.pine64.org/index.php/PinePhone#Hardware_revisions
 -->
 
-### On what postmarketOS version did you encounter the issue?
+### On what Nura version did you encounter the issue?
 <!--
 	Replace space inside `[ ]` with `x` to fill the checkbox
 -->
 * [ ] edge (`main` branch)
 * [ ] `v26.06`
-* [ ] `v25.12` (Supported until 2026-07-31)
 
 * [ ] I confirm that the issue still is present after running `sudo apk upgrade -a`
 
@@ -43,15 +42,15 @@
 ### Which init system are you using?
 * [ ] OpenRC
 * [ ] systemd
-### How did you get postmarketOS image?
-* [ ] from https://images.postmarketos.org
+### How did you get your Nura image?
+* [ ] from https://images.nura.eco
 * [ ] I built it using pmbootstrap
 * [ ] It was preinstalled on my device
 ### What's the build date of the image? (in yyyy-mm-dd format)
 <!--
 	Notes:
 		can be left empty if unsure
-		If you downloaded image from images.postmarketos.org, date will be in yyyymmdd format
+		If you downloaded image from images.nura.eco, date will be in yyyymmdd format
 -->
 
 ### Additional information
