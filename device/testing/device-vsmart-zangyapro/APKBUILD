@@ -1,0 +1,56 @@
+# Reference: <https://nura.eco/devicepkg>
+maintainer="Adrian Nguyen <thenguyen1024@gmail.com>"
+pkgname=device-vsmart-zangyapro
+pkgdesc="Vsmart Active 1"
+pkgver=1
+pkgrel=0
+url="https://nura.eco"
+license="MIT"
+arch="aarch64"
+options="!check !archcheck"
+# NetworkManager (+WiFi backend), wpa_supplicant and openssh are pulled in by
+# the chosen UI (postmarketos-ui-console -> postmarketos-base-ui-networkmanager)
+# and postmarketos-base, so they are NOT listed here. Only device-specific bits
+# stay: the firmware (WCN3990 WiFi board-2.bin+firmware-5.bin via
+# linux-firmware-ath10k; a512_zap.mbn for the GPU in firmware-vsmart-zangyapro;
+# a530 microcode in firmware-qcom-adreno-a530), the kernel, the SoC glue, and
+# bluez (base-ui only integrates BT *if* bluez is present, so keep it to
+# guarantee the auto-start symlink below works).
+depends="
+	bluez
+	firmware-qcom-adreno-a530
+	firmware-vsmart-zangyapro
+	linux-postmarketos-qcom-sdm660
+	mkbootimg
+	msm-firmware-loader
+	postmarketos-base
+	qbootctl
+	soc-qcom-sdm660
+	soc-qcom-sdm660-rproc
+	"
+makedepends="devicepkg-dev"
+source="
+	deviceinfo
+	modules-initfs
+"
+
+build() {
+	devicepkg_build $startdir $pkgname
+}
+
+package() {
+	devicepkg_package $startdir $pkgname
+
+	# Auto-start Bluetooth at boot (for a BT keyboard on a headless box)
+	# and make sure WiFi (NetworkManager) and SSH come up too. WiFi firmware
+	# (WCN3990 board-2.bin + firmware-5.bin) comes via linux-firmware-ath10k
+	# (a dependency of firmware-vsmart-zangyapro above).
+	install -dm755 "$pkgdir"/etc/systemd/system/multi-user.target.wants
+	ln -sf /usr/lib/systemd/system/bluetooth.service \
+		"$pkgdir"/etc/systemd/system/multi-user.target.wants/bluetooth.service
+}
+
+sha512sums="
+e1b428328390178fc8a5b4fff57d22871386a6ecefd4934dad62ef9f0b016e077d4667cb2dc4372402bfc4eaaf4027006aabe8b2d45bbd31a451b5a9009dd5ef  deviceinfo
+ac22d4ca340c1e20b6e59319d9d99ee180119179942d0c86138c671cc0912501688d0a79522aec8fbb9618fdbbc78470e1280429df9247d6ac43718c611e0025  modules-initfs
+"
