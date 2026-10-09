@@ -2,7 +2,7 @@
 maintainer="Anri Dellal <anridellal@gmail.com>"
 pkgname=device-nobby-230
 pkgdesc="Nobby 230"
-pkgver=5
+pkgver=6
 pkgrel=0
 url="https://postmarketos.org"
 license="MIT"
@@ -10,9 +10,11 @@ arch="armv7"
 options="!check !archcheck"
 depends="soc-sprd-audio-sc8830 msm-fb-refresher postmarketos-base linux-nobby-230 mkbootimg"
 makedepends="devicepkg-dev"
+install="$pkgname.post-install"
 source="
 	deviceinfo
 	kernel-cmdline.conf
+	telnetd
 "
 
 build() {
@@ -21,10 +23,12 @@ build() {
 
 package() {
 	devicepkg_package $startdir $pkgname
+	install -Dm755 "$srcdir"/telnetd "$pkgdir"/etc/init.d/telnetd
 }
 
 
 sha512sums="
-100491c8677daa5a8898e5f5562656ed45b2bda4464db867f2f6d5902526f1b2ddd427a7dfcc95aab0236829744c5a272ed29dce1062e6e8cf89773bb691f019  deviceinfo
+0bbd025d158fa87027f76799cac5d26d27a47654202d354c61fced73ec49da8cbf10b216395ebd9359e48e6925b25eb273b7005b271ebfa6d0e8cc32b6f56158  deviceinfo
 41dd6dbff0ea7cfa308dc533b6c0b85cf280a89e23017e573e263f67e9802c77a0a795f3e163624f96ee7d404450b88d9aaaa599fb2ac4f136f36c18a42be1a4  kernel-cmdline.conf
+6307623122f823092c763e79c37ab2a67c6afc0f580da56af96b90fe1ec7511610124057e9c344b8ac92e67af2492994be887151f07ff9d06ab398e942da53ec  telnetd
 "
