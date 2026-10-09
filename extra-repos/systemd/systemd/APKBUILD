@@ -14,10 +14,10 @@
 
 maintainer="Clayton Craft <craftyguy@postmarketos.org>"
 pkgname=systemd
-pkgver=262_rc3
+pkgver=262
 _pkgver="${pkgver/_/-}"
 # pkgrel must match systemd-stage0!
-pkgrel=0
+pkgrel=4
 pkgdesc="System and service manager"
 url="https://github.com/systemd/systemd"
 # armhf: no linux-stable
@@ -60,20 +60,16 @@ makedepends="
 	coreutils
 	cryptsetup-dev
 	curl-dev
+	dbus-dev
 	elfutils
-	glib-dev
 	gperf
 	grep
 	kmod-dev
 	libapparmor-dev
 	libarchive-dev
 	libbpf-dev
-	libcap-dev
 	libfido2-dev
 	libgcc
-	libgcrypt-dev
-	libintl
-	libiptcdata-dev
 	libmicrohttpd-dev
 	libpwquality-dev
 	libqrencode-dev
@@ -81,19 +77,19 @@ makedepends="
 	libselinux-dev
 	libucontext-dev
 	libxkbcommon-dev
+	linux-headers
 	linux-pam-dev
 	linux-stable-dev
 	lz4-dev
 	meson
 	musl-dev
 	pcre2-dev
-	perl
 	pkgconf
+	polkit-dev
 	py3-elftools
 	py3-jinja2
 	py3-lxml
 	python3-dev
-	rsync
 	tpm2-tss-dev
 	tpm2-tss-esys
 	tpm2-tss-mu
@@ -104,9 +100,6 @@ makedepends="
 	xz-dev
 	zlib-dev
 	zstd-dev
-
-	dbus-dev
-	polkit-dev
 	"
 
 # valgrind-dev: not available on armhf and loongarch64.
@@ -134,18 +127,15 @@ depends="
 	libblkid
 	libbpf
 	libbz2
-	libcap2
 	libdw
 	libelf
 	libfdisk
 	libfido2
-	libgcrypt
 	libidn2
 	libmount
 	libpwquality
 	libqrencode
 	libseccomp
-	libselinux
 	libxkbcommon
 	linux-pam
 	lz4-libs
@@ -228,6 +218,7 @@ fi
 source="
 	$pkgname-$pkgver.tar.gz::https://github.com/systemd/systemd/archive/refs/tags/v$_pkgver.tar.gz
 	wired.network
+	0001-nsresourced-don-t-treat-BPF-LSM-attach-failures-as-f.patch
 	"
 builddir=${_upstream_srcdir:-"$srcdir/$pkgname-$_pkgver"}
 _meson_builddir=${_meson_builddir:-build}
@@ -290,7 +281,7 @@ build() {
 		-Dbootloader="$_bootloader" \
 		-Dinitrd=true \
 		-Dhibernate=false \
-		-Dselinux=enabled \
+		-Dselinux=disabled \
 		-Dukify=disabled \
 		-Dtpm2=enabled \
 		\
@@ -442,6 +433,7 @@ networkd() {
 	amove usr/lib/systemd/system/systemd-networkd.socket
 	amove usr/lib/systemd/system/systemd-networkd-wait-online.service
 	amove usr/lib/sysusers.d/systemd-network.conf
+	amove usr/lib/tmpfiles.d/systemd-network.conf
 	amove usr/share/dbus-1/interfaces/org.freedesktop.network1.DHCPServer.xml
 	amove usr/share/dbus-1/interfaces/org.freedesktop.network1.Link.xml
 	amove usr/share/dbus-1/interfaces/org.freedesktop.network1.Manager.xml
@@ -640,6 +632,7 @@ _resolve_packages() {
 
 
 sha512sums="
-baa1d4e838a6f5d4646bbbe289212c9832d68ea1496cf89909d4bcd2f69950b1e4992e2762df977995616a5dac8151e6e836f837970e5b5cb48bcbcf971d9eab  systemd-262_rc3.tar.gz
+4765e29d37c716dbe629d88bf1ed07b857d373333e64966832039c0031aa46ed7e76efd7b112eb199508adffc8afbf185b3360c9a66d100da052c407bd3f02d5  systemd-262.tar.gz
 81c897fed8a3fbfb67ec591b2398a5d65e4af1b3ef379376c157c98d71f085b707f8ebc896d5571a94f99f8fc84fd6b43e3b879ca9b0d57fc6c4596034c7a777  wired.network
+8d5b72fddd69bb70d55756e4b9f9048b743bb4ccc6a48316d8c52c60934dbbac1ae98418f64b7177485ffd34fbb461d5a402d509d3d44ddf51d75305ff7f2750  0001-nsresourced-don-t-treat-BPF-LSM-attach-failures-as-f.patch
 "
