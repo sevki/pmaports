@@ -1,6 +1,6 @@
 maintainer="Clayton Craft <clayton@craftyguy.net>"
 pkgname=postmarketos-base-ui
-pkgver=61
+pkgver=62
 pkgrel=0
 pkgdesc="Meta package for minimal postmarketOS UI base"
 url="https://postmarketos.org"
@@ -8,10 +8,10 @@ arch="noarch"
 license="GPL-3.0-or-later"
 depends="
 	avahi
-	chrony
 	dbus
 	haveged
 	nftables
+	ntpd-rs
 	pipewire
 	pipewire-spa-libcamera
 	pipewire-webrtc
@@ -65,7 +65,6 @@ install="
 	$pkgname-wifi-wpa_supplicant-openrc.post-upgrade
 	"
 replaces="
-	chrony-common
 	linux-pam
 	postmarketos-base
 	sleep-inhibitor
@@ -82,7 +81,6 @@ _pmb_recommends="
 	"
 
 _source644="
-	etc/chrony/chrony.conf
 	etc/environment
 	etc/elogind/logind.conf
 	etc/conf.d/bluetooth
@@ -173,9 +171,9 @@ bluez_openrc() {
 openrc() {
 	install_if="$pkgname=$pkgver-r$pkgrel openrc"
 	depends="
-		chrony-openrc
 		dbus-openrc
 		haveged-openrc
+		ntpd-rs-openrc
 		openrc
 		routewrangler-openrc
 		sleep-inhibitor
@@ -348,7 +346,6 @@ iio_sensor_proxy_systemd() {
 }
 
 sha512sums="
-187baa4a2b77e1e97a13536553ef2e1f64c3968f07ab2a372b550e4eee10a801a3b9797766d0d9f566148230335f3d4d150cd335bc40050322313a195874d608  rootfs-etc-chrony-chrony.conf
 78ce55d9bb50db22df3f4b8a0757f7d6147caa212bcc5366b8bc03cdabfd6f20354c272120d75789424d1cacc17cd62facbf3fae497d9f1714756578c80d3072  rootfs-etc-environment
 8d2c54fe3ca62c62f8337fb6be28479d0e02ea63f32abae81907f2768631e65c9e17485f8bc0854a013377f729b06dd1873e2b75f86f657ece866d00aecbbdb4  rootfs-etc-elogind-logind.conf
 b841282b96110ec59a7aa539db0737327b09549d55c78dc4b2c3b28b4a6ad1facf015b3175cb6d3a38f13e47aa6314ef3dc1514a4e60dd653a97409ec54ba706  rootfs-etc-conf.d-bluetooth
