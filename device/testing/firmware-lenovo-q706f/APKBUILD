@@ -1,8 +1,7 @@
-# Archived: unmaintained
-maintainer=""
+maintainer="Andrea Del Sarto <delsadj@gmail.com>"
 pkgname=firmware-lenovo-q706f
 pkgver=20240726
-pkgrel=2
+pkgrel=0
 pkgdesc="Firmware for Lenovo Xiaoxin Pad Pro 12.6 (Lenovo Tab P12 Pro)"
 subpackages="
 	$pkgname-adreno
