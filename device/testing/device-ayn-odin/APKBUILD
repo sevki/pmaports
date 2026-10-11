@@ -2,7 +2,7 @@
 maintainer="Stefan Hansson <newbyte@postmarketos.org>"
 pkgname=device-ayn-odin
 pkgdesc="AYN Odin"
-pkgver=11
+pkgver=12
 pkgrel=0
 url="https://postmarketos.org"
 license="MIT"
@@ -86,7 +86,7 @@ _phosh_m2() {
 }
 
 sha512sums="
-bf92c273e51a74fd7a331f4eade651650c5b003ebaa0484943bd9373fc8abd80baea178b361c9c1b09468ffde55181fab4a7ff8041b96656d78742d0ea34ef46  deviceinfo
+9689c4f7b156c189a65f3c49e81e5bff43c61938c84d513a661759a443d7b09f2fac4f88d478a13af2830ab90fe69a5f8e94de64895f9de5475c389be6d1832a  deviceinfo
 4991bd4df62daf75dc051f45c9250636d819c3509fec650026da72b6fb5fe57a6703fb8a15c1b1d4eb63751eed403fc90e3cf867f799596a0a52960cabfc4f58  kernel-cmdline.conf
 cd3da21e666698f92382938bf75c8e57e7582b440c8de69c19841a5d36861a8bdd3f4e1ac5282c1e9a8ad5009cc4ffbb2bf40cd8bb8fb9a22acdf5d8caf37e67  hexagonrpcd.confd
 dc987332abe6d5c7ac511be1045af227d80b9dbe2f907e23e89b62217ca867dd064484caec36f0605dda89a9894da780b75beb23d9b893bd0f9a46593e675393  modules-initfs
