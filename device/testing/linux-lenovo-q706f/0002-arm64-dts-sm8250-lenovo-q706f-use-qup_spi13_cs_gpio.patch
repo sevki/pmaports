@@ -1,0 +1,11 @@
+--- a/arch/arm64/boot/dts/qcom/sm8250-lenovo-q706f.dts
++++ b/arch/arm64/boot/dts/qcom/sm8250-lenovo-q706f.dts
+@@ -1262,7 +1262,7 @@
+ &spi13 {
+ 	status = "okay";
+ 	pinctrl-names = "default";
+-	pinctrl-0 = <&qup_spi13_data_clk>, <&qup_spi13_cs>;
++	pinctrl-0 = <&qup_spi13_data_clk>, <&qup_spi13_cs_gpio>;
+ 	cs-gpios = <&tlmm 39 GPIO_ACTIVE_LOW>;
+ 
+ 	touchscreen@0 {
