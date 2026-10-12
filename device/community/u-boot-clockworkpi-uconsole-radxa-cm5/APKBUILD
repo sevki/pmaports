@@ -1,0 +1,70 @@
+maintainer="Antoine Martin (ayakael) <dev@ayakael.net>"
+pkgname=u-boot-clockworkpi-uconsole-radxa-cm5
+pkgver=2026.07
+pkgrel=0
+_ddr_ver=1.24
+_trust_ver=1.56
+pkgdesc="u-boot bootloader for the ClockworkPi with Radxa CM5 (rk3588)"
+url="https://gitlab.com/u-boot/u-boot/"
+arch="aarch64"
+license="GPL-2.0-or-later OFL-1.1 BSD-2-Clause BSD-3-Clause eCos-2.0 IBM-pibs
+	ISC LGPL-2.0-only LGPL-2.1-only X11"
+options="!check"
+
+makedepends="
+	bash
+	bc
+	bison
+	dtc
+	flex
+	gnutls-dev
+	libfdt
+	make
+	openssl-dev
+	py3-elftools
+	py3-setuptools
+	python3-dev
+	swig
+"
+_rkbin_commit="bffaab066e126037bf237bd7066e50db60af7f03"
+builddir="$srcdir"/u-boot-$pkgver
+
+source="
+	https://ftp.denx.de/pub/u-boot/u-boot-${pkgver//_/-}.tar.bz2
+	https://github.com/rockchip-linux/rkbin/raw/$_rkbin_commit/bin/rk35/rk3588_ddr_lp4_2112MHz_lp5_2400MHz_v$_ddr_ver.bin
+	https://github.com/rockchip-linux/rkbin/raw/$_rkbin_commit/bin/rk35/rk3588_bl31_v$_trust_ver.elf
+	https://ayakael.net/api/packages/forge/generic/spl_loader_rk3588/1.19.113/rk3588_spl_loader_v1.19.113.bin
+	0001-Add-uconsole-rk3588-board-information.patch
+	0001-pylibfdt-Replace-removed-SWIG-Python-2-compatibility.patch
+	update-u-boot
+"
+
+build() {
+	export ROCKCHIP_TPL="$srcdir"/rk3588_ddr_lp4_2112MHz_lp5_2400MHz_$_ddr_ver.bin
+	export BL31="$srcdir"/rk3588_bl31_v$_trust_ver.elf
+
+	make uconsole-rk3588_defconfig
+	make
+
+	# make idbloader.img
+	tools/mkimage -n rk3588 -T rksd -d "$ROCKCHIP_TPL:$builddir"/spl/u-boot-spl.bin "$builddir"/idbloader.img
+}
+
+package() {
+	install -D -m755 "$srcdir"/update-u-boot "$pkgdir"/usr/sbin/update-u-boot
+	install -Dm644 \
+		"$builddir"/idbloader.img \
+		"$builddir"/u-boot.itb \
+		"$srcdir"/rk3588_spl_loader_v1.19.113.bin \
+		-t "$pkgdir"/usr/share/u-boot/clockworkpi-uconsole-radxa-cm5
+}
+
+sha512sums="
+1292e1c15b75fde569efd1f983aa38e8db2e8b10b19de964886c4e80988922263bb862f5eb3b39f2051c5b28f43958f40b1f0e5c036de7fd862dc30b603cde5d  u-boot-2026.07.tar.bz2
+158c4ad94b18f42d76603da5d7193ddf307b881c253342ca4acad4c9fcf74709b4386b2ff9719f3aa665f0244040e28c0f7a26eee312c8d67d24cd28f7045c53  rk3588_ddr_lp4_2112MHz_lp5_2400MHz_v1.24.bin
+1e52bb937fa6beca721079a7da1397edddc13b71da88ba01a558035aaa05905bd8b076e116ea82e4808cb3ddc7a6ce9686e37671f40ca7085605f174effcbc8c  rk3588_bl31_v1.56.elf
+ec2bcf5d5574759ba4bfa71a1880aa76a6647b73a104cac01c17666beab44bf864cc25407435bd2bdc2f9bb88f4bee12ee980cd824044179549e895daba8eff9  rk3588_spl_loader_v1.19.113.bin
+c26b6c1252b06a137ab284f8db4d699e9341a07d80dac90d3122047d57a707b1ade2d6a205659b2bff36485809c9bc241f67537828fd6c145320f1673eeec6aa  0001-Add-uconsole-rk3588-board-information.patch
+c2d2a801d12a3b11abf2202c0f46dceab69c4b2302d024fe2af1342fd764aab766269ec066ce57c0a3f436292bf107155012076c9a2de4cd7eccf72144dc42ca  0001-pylibfdt-Replace-removed-SWIG-Python-2-compatibility.patch
+0296588a73bdb968f1413c1e416b05da01202dd8bdeadb9fe9530ab08ed071c60ec44f6591d88453da0ea82c4d9364f85d74bb5830093c0cf97f63080f4011e5  update-u-boot
+"
