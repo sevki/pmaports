@@ -652,7 +652,7 @@ extract_initramfs_extra() {
 	echo "Extract $initramfs_extra"
 	# uncompressed:
 	# cpio -di < "$initramfs_extra"
-	gzip -d -c "$initramfs_extra" | cpio -iu
+	zstd -d -c "$initramfs_extra" | cpio -iu
 }
 
 wait_partition() {

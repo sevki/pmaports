@@ -6,6 +6,7 @@
 /usr/bin/iskey
 /usr/bin/beebzzr
 /usr/bin/unudhcpd
+/usr/bin/zstd
 /usr/sbin/losetup
 /usr/share/deviceinfo/deviceinfo
 /usr/share/initramfs/init_functions.sh:/init_functions.sh
