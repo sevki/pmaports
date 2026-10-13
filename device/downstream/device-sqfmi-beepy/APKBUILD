@@ -1,8 +1,8 @@
 maintainer="Adam Thiede <me@adamthiede.com>"
 pkgname=device-sqfmi-beepy
 pkgdesc="SQFMI Beepy"
-pkgver=8
-pkgrel=1
+pkgver=9
+pkgrel=0
 
 _kbdmodname=beepy-kbd
 _kbdmodver=2.11
@@ -117,7 +117,7 @@ package() {
 	cp -r $_dispdir/src $_dispdir/sharp-drm.dts "$dispdestdir"
 
 	# install symbol-overlay
-	install -Dm755 $_overlaydir/symbol-overlay "$pkgdir"/usr/sbin/symbol-overlay
+	install -Dm755 $_overlaydir/symbol-overlay "$pkgdir"/usr/bin/symbol-overlay
 }
 
 modules() {
@@ -130,7 +130,7 @@ modules() {
 
 overlay() {
 	install_if="$pkgname=$pkgver-r$pkgrel"
-	amove usr/sbin/symbol-overlay
+	amove usr/bin/symbol-overlay
 }
 
 openrc() {
