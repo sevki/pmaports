@@ -1,0 +1,52 @@
+--- a/arch/arm64/boot/dts/qcom/sm8250-lenovo-q706f.dts
++++ b/arch/arm64/boot/dts/qcom/sm8250-lenovo-q706f.dts
+@@ -1999,4 +1999,49 @@
+ 	firmware-name = "qcom/sm8250/q706f/venus.mbn";
+ 	status = "okay";
+ };
++&camcc {
++	status = "okay";
++};
++
++&camss {
++	status = "okay";
++
++	ports {
++		port@2 {
++			reg = <2>;
++			csiphy2_ep: endpoint {
++				data-lanes = <1 2 3 4>;
++				remote-endpoint = <&ov8856_ep>;
++			};
++		};
++	};
++};
++
++&cci1 {
++	status = "okay";
++};
++
++&cci1_i2c0 {
++	camera@10 {
++		compatible = "ovti,ov8856";
++		reg = <0x10>;
++
++		clocks = <&camcc CAM_CC_MCLK2_CLK>;
++		clock-names = "xvclk";
++		clock-frequency = <24000000>;
+ 
++		reset-gpios = <&tlmm 22 GPIO_ACTIVE_LOW>;
++
++		dovdd-supply = <&vreg_l7f_1p8>;
++		avdd-supply = <&vreg_l6f_2p8>;
++		dvdd-supply = <&vreg_l3f_1p1>;
++
++		port {
++			ov8856_ep: endpoint {
++				data-lanes = <1 2 3 4>;
++				link-frequencies = /bits/ 64 <360000000>;
++				remote-endpoint = <&csiphy2_ep>;
++			};
++		};
++	};
++};

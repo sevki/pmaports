@@ -40,6 +40,7 @@ source="
 	0003-goodix-berlin-stylus-support.patch
 	0004-sound-sm8250-support-primary-tdm-capture.patch
 	0005-sound-enable-microphone-capture-tdm.patch
+	0006-camera-dts-enable-ov8856-webcam.patch
 "
 builddir="$srcdir/linux-$_tag"
 
@@ -86,4 +87,5 @@ abccc24301755b749499b566c0970293b3a13d325ac03f61de3bcc2b6c4e7b03680db24e2014e554
 3d624b25742fe3d657a3d816e25cc014bf2bab237621bc1d90fa9a60f020de61e1a3f94583cb85098cdb8709cc79a4acaec93bb64c7111e3535b9268ea851698  0003-goodix-berlin-stylus-support.patch
 397b392d82353e274a3fa62187513a8c77b96df1b456d32e562beaa5c6c1b06fcde6c3895c93d2a5929c4edec7b1c11dfe66b0bbc3e07b6644255303002daa3c  0004-sound-sm8250-support-primary-tdm-capture.patch
 0307ae77d5b2372c5437e350cec90dfc983d22f871b2361500b441afc36c7ff02bc88d54ea4b5f041c8d1da0af1ff6f54bb95d350693b12afc587b1bf07d844e  0005-sound-enable-microphone-capture-tdm.patch
+01e5b271a25b46560f6267b2c83d4e46c8b015dd1f767624d9bae3a8e3475bc89dbe17fd345abd12581f21aaebd250b496eb1028e1f0b898fc28c9e8ea2a1576  0006-camera-dts-enable-ov8856-webcam.patch
 "
