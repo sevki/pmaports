@@ -1,0 +1,17 @@
+#!/sbin/openrc-run
+
+name="Honor 6X display manager"
+description="Apply Honor 6X display and touch orientation before LightDM"
+
+# Xorg must see the generated fbdev and touchscreen configuration before it starts.
+depend() {
+	need localmount
+	after udev
+	before lightdm
+}
+
+start() {
+	ebegin "Applying Honor 6X display orientation"
+	/usr/bin/honor6x-displayctl apply-current
+	eend $?
+}
