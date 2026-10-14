@@ -1,0 +1,484 @@
+diff --git a/arch/arm64/boot/dts/mediatek/Makefile b/arch/arm64/boot/dts/mediatek/Makefile
+index a86fb313b..fca11267a 100644
+--- a/arch/arm64/boot/dts/mediatek/Makefile
++++ b/arch/arm64/boot/dts/mediatek/Makefile
+@@ -144,6 +144,15 @@ dtb-$(CONFIG_ARCH_MEDIATEK) += mt8186-corsola-tentacool-sku327681.dtb
+ dtb-$(CONFIG_ARCH_MEDIATEK) += mt8186-corsola-tentacool-sku327683.dtb
+ dtb-$(CONFIG_ARCH_MEDIATEK) += mt8186-corsola-tentacruel-sku262144.dtb
+ dtb-$(CONFIG_ARCH_MEDIATEK) += mt8186-corsola-tentacruel-sku262148.dtb
++dtb-$(CONFIG_ARCH_MEDIATEK) += mt8186-corsola-veluza-sku131072.dtb
++dtb-$(CONFIG_ARCH_MEDIATEK) += mt8186-corsola-veluza-sku131073.dtb
++dtb-$(CONFIG_ARCH_MEDIATEK) += mt8186-corsola-veluza-sku131074.dtb
++dtb-$(CONFIG_ARCH_MEDIATEK) += mt8186-corsola-veluza-sku131075.dtb
++dtb-$(CONFIG_ARCH_MEDIATEK) += mt8186-corsola-veluza-sku131076.dtb
++dtb-$(CONFIG_ARCH_MEDIATEK) += mt8186-corsola-veluza-sku131077.dtb
++dtb-$(CONFIG_ARCH_MEDIATEK) += mt8186-corsola-veluza-sku131080.dtb
++dtb-$(CONFIG_ARCH_MEDIATEK) += mt8186-corsola-veluza-sku131082.dtb
++dtb-$(CONFIG_ARCH_MEDIATEK) += mt8186-corsola-veluza-sku65536.dtb
+ dtb-$(CONFIG_ARCH_MEDIATEK) += mt8186-corsola-voltorb.dtb
+ dtb-$(CONFIG_ARCH_MEDIATEK) += mt8186-evb.dtb
+ dtb-$(CONFIG_ARCH_MEDIATEK) += mt8188-evb.dtb
+diff --git a/arch/arm64/boot/dts/mediatek/mt8186-corsola-it6505.dtsi b/arch/arm64/boot/dts/mediatek/mt8186-corsola-it6505.dtsi
+new file mode 100644
+index 000000000..96c10907e
+--- /dev/null
++++ b/arch/arm64/boot/dts/mediatek/mt8186-corsola-it6505.dtsi
+@@ -0,0 +1,107 @@
++// SPDX-License-Identifier: (GPL-2.0 OR MIT)
++/*
++ * Copyright 2022 Google LLC
++ */
++
++&typec_port0 {
++	remote-endpoint = <&ite_typec0>;
++};
++
++&typec_port1 {
++	remote-endpoint = <&ite_typec1>;
++};
++
++&dpi_out {
++	remote-endpoint = <&it6505_in>;
++};
++
++&pio {
++	it6505_pins: it6505-pins {
++		pins-hpd {
++			pinmux = <PINMUX_GPIO10__FUNC_GPIO10>;
++			input-enable;
++			bias-pull-up;
++		};
++
++		pins-int {
++			pinmux = <PINMUX_GPIO8__FUNC_GPIO8>;
++			input-enable;
++			bias-pull-up;
++		};
++
++		pins-reset {
++			pinmux = <PINMUX_GPIO177__FUNC_GPIO177>;
++			output-low;
++			bias-pull-up;
++		};
++	};
++};
++
++&i2c3 {
++	clock-frequency = <100000>;
++
++	it6505dptx: it6505dptx@5c {
++		status = "okay";
++
++		#address-cells = <1>;
++		#size-cells = <0>;
++		#sound-dai-cells = <0>;
++		compatible = "ite,it6505";
++		interrupt-parent = <&pio>;
++		interrupts = <8 IRQ_TYPE_LEVEL_LOW 8 0>;
++		reg = <0x5c>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&it6505_pins>;
++		ovdd-supply = <&mt6366_vsim2_reg>;
++		pwr18-supply = <&pp1800_dpbrdg_dx>;
++		reset-gpios = <&pio 177 0>;
++		hpd-gpios = <&pio 10 0>;
++		no-laneswap;
++		data-lanes = <2>;
++		max-pixel-clock-khz = <150000>;
++
++		port {
++			it6505_in: endpoint {
++				remote-endpoint = <&dpi_out>;
++			};
++		};
++
++		switches {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			switch@0 {
++				compatible = "typec-switch";
++				reg = <0>;
++				mode-switch;
++
++				ports {
++					#address-cells = <1>;
++					#size-cells = <0>;
++					port@0 {
++						reg = <0>;
++						ite_typec0: endpoint {
++							remote-endpoint = <&typec_port0>;
++						};
++					};
++				};
++			};
++
++			switch@1 {
++				compatible = "typec-switch";
++				reg = <1>;
++				mode-switch;
++
++				ports {
++					#address-cells = <1>;
++					#size-cells = <0>;
++					port@0 {
++						reg = <0>;
++						ite_typec1: endpoint {
++							remote-endpoint = <&typec_port1>;
++						};
++					};
++				};
++			};
++		};
++	};
++};
+diff --git a/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131072.dts b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131072.dts
+new file mode 100644
+index 000000000..560a39d88
+--- /dev/null
++++ b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131072.dts
+@@ -0,0 +1,21 @@
++/// SPDX-License-Identifier: (GPL-2.0 OR MIT)
++/*
++ * Copyright 2024 Google LLC
++ */
++
++/dts-v1/;
++#include "mt8186-corsola-veluza.dtsi"
++
++/ {
++	model = "Google veluza sku131072/sku131081 board";
++	compatible = "google,veluza-sku131072", "google,veluza-sku131081",
++		     "google,veluza", "google,corsola", "mediatek,mt8186";
++};
++
++&gpio_keys {
++	status = "okay";
++};
++
++&mt6366codec {
++	mediatek,dmic-mode = <0>; /* two-wire */
++};
+diff --git a/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131073.dts b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131073.dts
+new file mode 100644
+index 000000000..e35760317
+--- /dev/null
++++ b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131073.dts
+@@ -0,0 +1,21 @@
++// SPDX-License-Identifier: (GPL-2.0 OR MIT)
++/*
++ * Copyright 2024 Google LLC
++ */
++
++/dts-v1/;
++#include "mt8186-corsola-veluza.dtsi"
++
++/ {
++	model = "Google veluza sku131073/sku131078 board";
++	compatible = "google,veluza-sku131073", "google,veluza-sku131078",
++		     "google,veluza", "google,corsola", "mediatek,mt8186";
++};
++
++&gpio_keys {
++	status = "disabled";
++};
++
++&mt6366codec {
++	mediatek,dmic-mode = <0>; /* two-wire */
++};
+diff --git a/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131074.dts b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131074.dts
+new file mode 100644
+index 000000000..4b4e28d84
+--- /dev/null
++++ b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131074.dts
+@@ -0,0 +1,25 @@
++// SPDX-License-Identifier: (GPL-2.0 OR MIT)
++/*
++ * Copyright 2024 Google LLC
++ */
++
++/dts-v1/;
++#include "mt8186-corsola-veluza.dtsi"
++
++/ {
++	model = "Google veluza sku131074/sku131079 board";
++	compatible = "google,veluza-sku131074", "google,veluza-sku131079",
++		     "google,veluza", "google,corsola", "mediatek,mt8186";
++};
++
++&usb_c1 {
++	status = "disabled";
++};
++
++&gpio_keys {
++	status = "okay";
++};
++
++&mt6366codec {
++	mediatek,dmic-mode = <0>; /* two-wire */
++};
+diff --git a/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131075.dts b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131075.dts
+new file mode 100644
+index 000000000..f27c03651
+--- /dev/null
++++ b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131075.dts
+@@ -0,0 +1,25 @@
++// SPDX-License-Identifier: (GPL-2.0 OR MIT)
++/*
++ * Copyright 2024 Google LLC
++ */
++
++/dts-v1/;
++#include "mt8186-corsola-veluza.dtsi"
++
++/ {
++	model = "Google veluza sku131075 board";
++	compatible = "google,veluza-sku131075", "google,veluza",
++		     "google,corsola", "mediatek,mt8186";
++};
++
++&usb_c1 {
++	status = "disabled";
++};
++
++&gpio_keys {
++	status = "disabled";
++};
++
++&mt6366codec {
++	mediatek,dmic-mode = <0>; /* two-wire */
++};
+diff --git a/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131076.dts b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131076.dts
+new file mode 100644
+index 000000000..48ab44301
+--- /dev/null
++++ b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131076.dts
+@@ -0,0 +1,21 @@
++// SPDX-License-Identifier: (GPL-2.0 OR MIT)
++/*
++ * Copyright 2024 Google LLC
++ */
++
++/dts-v1/;
++#include "mt8186-corsola-veluza.dtsi"
++
++/ {
++	model = "Google veluza sku131076 board";
++	compatible = "google,veluza-sku131076", "google,veluza",
++		     "google,corsola", "mediatek,mt8186";
++};
++
++&usb_c1 {
++	status = "disabled";
++};
++
++&gpio_keys {
++	status = "disabled";
++};
+diff --git a/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131077.dts b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131077.dts
+new file mode 100644
+index 000000000..28d40db46
+--- /dev/null
++++ b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131077.dts
+@@ -0,0 +1,17 @@
++// SPDX-License-Identifier: (GPL-2.0 OR MIT)
++/*
++ * Copyright 2024 Google LLC
++ */
++
++/dts-v1/;
++#include "mt8186-corsola-veluza.dtsi"
++
++/ {
++	model = "Google veluza sku131077 board";
++	compatible = "google,veluza-sku131077","google,veluza",
++		     "google,corsola", "mediatek,mt8186";
++};
++
++&gpio_keys {
++	status = "disabled";
++};
+diff --git a/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131080.dts b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131080.dts
+new file mode 100644
+index 000000000..a6c4dcb0c
+--- /dev/null
++++ b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131080.dts
+@@ -0,0 +1,17 @@
++/// SPDX-License-Identifier: (GPL-2.0 OR MIT)
++/*
++ * Copyright 2024 Google LLC
++ */
++
++/dts-v1/;
++#include "mt8186-corsola-veluza.dtsi"
++
++/ {
++	model = "Google veluza sku131080 board";
++	compatible = "google,veluza-sku131080", "google,veluza",
++		     "google,corsola", "mediatek,mt8186";
++};
++
++&gpio_keys {
++	status = "okay";
++};
+diff --git a/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131082.dts b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131082.dts
+new file mode 100644
+index 000000000..3bed86474
+--- /dev/null
++++ b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku131082.dts
+@@ -0,0 +1,21 @@
++// SPDX-License-Identifier: (GPL-2.0 OR MIT)
++/*
++ * Copyright 2024 Google LLC
++ */
++
++/dts-v1/;
++#include "mt8186-corsola-veluza.dtsi"
++
++/ {
++	model = "Google veluza sku131082 board";
++	compatible = "google,veluza-sku131082", "google,veluza",
++		     "google,corsola", "mediatek,mt8186";
++};
++
++&usb_c1 {
++	status = "disabled";
++};
++
++&gpio_keys {
++	status = "okay";
++};
+diff --git a/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku65536.dts b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku65536.dts
+new file mode 100644
+index 000000000..d236d6d4e
+--- /dev/null
++++ b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza-sku65536.dts
+@@ -0,0 +1,23 @@
++// SPDX-License-Identifier: (GPL-2.0 OR MIT)
++/*
++ * Copyright 2024 Google LLC
++ */
++
++/dts-v1/;
++#include "mt8186-corsola-veluza.dtsi"
++
++/ {
++	model = "Google veluza sku65536/65537/65538/65539/65540/65541/65542/
++		65543/65544/65545/65546 board";
++	compatible = "google,veluza-sku65536", "google,veluza-sku65537",
++		     "google,veluza-sku65538", "google,veluza-sku65539",
++		     "google,veluza-sku65540", "google,veluza-sku65541",
++		     "google,veluza-sku65542", "google,veluza-sku65543",
++		     "google,veluza-sku65544", "google,veluza-sku65545",
++		     "google,veluza-sku65546", "google,veluza",
++		     "google,corsola", "mediatek,mt8186";
++};
++
++&gpio_keys {
++	status = "disabled";
++};
+diff --git a/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza.dtsi b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza.dtsi
+new file mode 100644
+index 000000000..103b349b7
+--- /dev/null
++++ b/arch/arm64/boot/dts/mediatek/mt8186-corsola-veluza.dtsi
+@@ -0,0 +1,100 @@
++// SPDX-License-Identifier: (GPL-2.0 OR MIT)
++/*
++ * Copyright 2024 Google LLC
++ */
++
++/dts-v1/;
++#include "mt8186-corsola-krabby.dtsi"
++
++&i2c1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&i2c1_pins &touchscreen_pins>;
++
++	/delete-node/ touchscreen@10;
++	touchscreen_synaptics: touchscreen@15 {
++		compatible = "hid-over-i2c";
++		reg = <0x15>;
++		interrupts-extended = <&pio 12 IRQ_TYPE_LEVEL_LOW>;
++		post-power-on-delay-ms = <10>;
++		hid-descr-addr = <0x0001>;
++		vdd-supply = <&pp3300_s3>;
++		status = "okay";
++	};
++
++	touchscreen_elan: touchscreen@10 {
++		compatible = "elan,ekth3500";
++		reg = <0x10>;
++		interrupts-extended = <&pio 12 IRQ_TYPE_LEVEL_LOW>;
++		status = "okay";
++	};
++
++	touchscreen_siw: touchscreen@34 {
++		compatible = "hid-over-i2c";
++		reg = <0x34>;
++		interrupts-extended = <&pio 12 IRQ_TYPE_LEVEL_LOW>;
++		post-power-on-delay-ms = <150>;
++		hid-descr-addr = <0x0001>;
++		vdd-supply = <&pp3300_s3>;
++		status = "okay";
++	};
++};
++
++&i2c2 {
++	touchpad@2c {
++		compatible = "hid-over-i2c";
++		reg = <0x2c>;
++		hid-descr-addr = <0x20>;
++		interrupts-extended = <&pio 11 IRQ_TYPE_LEVEL_LOW>;
++		vdd-supply = <&pp3300_s3>;
++		wakeup-source;
++	};
++};
++
++&keyboard_controller {
++	function-row-physmap = <
++		MATRIX_KEY(0x00, 0x02, 0)	/* T1 */
++		MATRIX_KEY(0x03, 0x02, 0)	/* T2 */
++		MATRIX_KEY(0x02, 0x02, 0)	/* T3 */
++		MATRIX_KEY(0x01, 0x02, 0)	/* T4 */
++		MATRIX_KEY(0x03, 0x04, 0)	/* T5 */
++		MATRIX_KEY(0x02, 0x04, 0)	/* T6 */
++		MATRIX_KEY(0x01, 0x04, 0)	/* T7 */
++		MATRIX_KEY(0x02, 0x09, 0)	/* T8 */
++		MATRIX_KEY(0x01, 0x09, 0)	/* T9 */
++		MATRIX_KEY(0x00, 0x04, 0)	/* T10 */
++	>;
++
++	linux,keymap = <
++		MATRIX_KEY(0x00, 0x02, KEY_BACK)
++		MATRIX_KEY(0x03, 0x02, KEY_REFRESH)
++		MATRIX_KEY(0x02, 0x02, KEY_ZOOM)
++		MATRIX_KEY(0x01, 0x02, KEY_SCALE)
++		MATRIX_KEY(0x03, 0x04, KEY_SYSRQ)
++		MATRIX_KEY(0x02, 0x04, KEY_BRIGHTNESSDOWN)
++		MATRIX_KEY(0x01, 0x04, KEY_BRIGHTNESSUP)
++		MATRIX_KEY(0x02, 0x09, KEY_MUTE)
++		MATRIX_KEY(0x01, 0x09, KEY_VOLUMEDOWN)
++		MATRIX_KEY(0x00, 0x04, KEY_VOLUMEUP)
++		CROS_STD_MAIN_KEYMAP
++	>;
++};
++
++&fhctl {
++	mediatek,hopping-ssc-percent = <1>;
++	status = "okay";
++};
++
++&u2port0 {
++	mediatek,eye-term = <2>;
++};
++
++&i2c_tunnel {
++	/delete-node/ sbs-battery@b;
++
++	battery: sbs-battery@f {
++		compatible = "sbs,sbs-battery";
++		reg = <0xf>;
++		sbs,i2c-retry-count = <2>;
++		sbs,poll-retry-count = <1>;
++	};
++};
