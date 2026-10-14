@@ -5,7 +5,7 @@ pkgname=systemd-stage0
 pkgver=262
 _pkgver="${pkgver/_/-}"
 # pkgrel must match systemd!
-pkgrel=7
+pkgrel=8
 pkgdesc="Minimal systemd bootstrap package"
 url="https://github.com/systemd/systemd"
 # armhf: pmb#2618
@@ -60,9 +60,6 @@ build() {
 		-Dmode=release \
 		-Dsplit-bin=true \
 		-Dlibc=musl \
-		\
-		-Dkmod-path=/bin/kmod \
-		-Dsulogin-path=/sbin/sulogin \
 		\
 		-Dwheel-group=true \
 		-Ddebug-shell=/bin/ash \
