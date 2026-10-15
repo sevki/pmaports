@@ -1,0 +1,18 @@
+the exynos framebuffer driver did not supply an implementation of fb_imageblit,
+leading to an instant crash when fbcon invokes it without checking.
+genric implementations of framebuffer operations are available via:
+CONFIG_FB_CFB_FILLRECT, CONFIG_FB_CFB_COPYAREA, CONFIG_FB_CFB_IMAGEBLIT=y
+but were not wired up in the driver.
+(also wires up cfb_copyarea, have not tested if it's needed.)
+
+--- a/drivers/video/fbdev/exynos/dpu_9810/decon_core.c.old      2026-09-22 17:34:26.914671726 +0000
++++ b/drivers/video/fbdev/exynos/dpu_9810/decon_core.c  2026-09-22 17:34:53.277294075 +0000
+@@ -3033,6 +3033,8 @@
+        .fb_blank       = decon_blank,
+        .fb_setcolreg   = decon_setcolreg,
++       .fb_copyarea    = cfb_copyarea,
+        .fb_fillrect    = cfb_fillrect,
++       .fb_imageblit   = cfb_imageblit,
+ #ifdef CONFIG_COMPAT
+        .fb_compat_ioctl = decon_compat_ioctl,
+ #endif
