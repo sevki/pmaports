@@ -1,4 +1,4 @@
-# Reference: <https://postmarketos.org/deviceinfo>
+# Reference: <https://nura.eco/deviceinfo>
 # Please use double quotes only. You can source this file in shell
 # scripts.
 
@@ -15,7 +15,6 @@ deviceinfo_disable_dhcpd="true"
 # Device related
 deviceinfo_drm="true"
 deviceinfo_chassis="embedded"
-deviceinfo_external_storage="true"
 
 # Bootloader related
 deviceinfo_sd_embed_firmware="u-boot/odroid-xu3/bl1.bin:1,u-boot/odroid-xu3/bl2.bin:31,u-boot/odroid-xu3/u-boot.bin:63,u-boot/odroid-xu3/tzsw.bin:2111"
