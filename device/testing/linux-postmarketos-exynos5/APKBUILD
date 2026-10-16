@@ -3,7 +3,7 @@
 maintainer="Henrik Grimler <henrik@grimler.se>"
 pkgname=linux-postmarketos-exynos5
 pkgver=6.18.33
-pkgrel=0
+pkgrel=1
 pkgdesc="Mainline kernel fork for Samsung Exynos5 devices"
 arch="armv7"
 _carch="arm"
@@ -12,18 +12,21 @@ url="https://gitlab.com/exynos5-mainline/linux"
 license="GPL-2.0-only"
 options="!strip !check !tracedeps
 	pmb:cross-native
-	pmb:kconfigcheck-community
 "
 makedepends="
 	bison
 	clang
+	elfutils-dev
 	findutils
 	flex
+	linux-headers
 	lld
 	llvm
 	openssl-dev
+	pahole
 	perl
 	postmarketos-installkernel
+	python3
 	xz
 	zstd
 "
@@ -69,5 +72,5 @@ package() {
 
 sha512sums="
 039faaba063d0867787de937be4f743d5fd7ac4b290774cbe13fe85db0a3cf54273583b1511920f35dcf3b6837accd1153d3133b9249efe46e0cf04292da1a53  linux-postmarketos-exynos5-v6.18.33-exynos5-lts.tar.bz2
-2caeba4253a09f1ea4e2ee816eaa221f8ebb29d794481a418690ca128440958f97a40adb3226b80193668403a1eda161cdff9389bc58cad5e997e055516bfb1d  config-postmarketos-exynos5.armv7
+5cd1cb8ece8fad9415e5464f4b1440b230042181b7964872a3bef8a94c5ecd0518a145d6b8d1a92066a8315da919d7a10100bccc8b2137fd56ccdd33411197c9  config-postmarketos-exynos5.armv7
 "
