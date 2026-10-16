@@ -1,0 +1,54 @@
+# Reference: <https://postmarketos.org/devicepkg>
+maintainer="Seshan Ravikumar <seshan@sineware.ca>"
+pkgname=device-ayn-thor
+pkgdesc="AYN Thor"
+pkgver=1
+pkgrel=0
+url="https://postmarketos.org"
+license="MIT"
+arch="aarch64"
+options="!check !archcheck"
+depends="
+	alsa-ucm-conf-ayn
+	firmware-ayn-audioreach-topology
+	firmware-ayn-thor
+	linux-ayn-thor
+	linux-firmware-ath12k
+	linux-firmware-qca
+	linux-firmware-qcom
+	postmarketos-base
+	soc-qcom
+	soc-qcom-qbootctl
+	systemd-boot
+	unl0kr-fbforcerefresh
+"
+makedepends="devicepkg-dev"
+source="
+	61-ayn-thor-gamepad.rules
+	90-ayn-thor-touchscreen.rules
+	deviceinfo
+	kcminputrc
+	kernel-cmdline.conf
+"
+
+build() {
+	devicepkg_build $startdir $pkgname
+}
+
+package() {
+	devicepkg_package $startdir $pkgname
+
+	install -Dm644 "$srcdir"/61-ayn-thor-gamepad.rules \
+		"$srcdir"/90-ayn-thor-touchscreen.rules \
+		-t "$pkgdir"/usr/lib/udev/rules.d
+	install -Dm644 "$srcdir"/kcminputrc \
+		-t "$pkgdir"/etc/xdg
+}
+
+sha512sums="
+e98f3426a195e600b7896939c09c6571bfe37de467f5a9c34055dac814a63c44914aa6d19c39917526f162caa68f16930fccf39c1396c5e4d7ff259d675d142a  61-ayn-thor-gamepad.rules
+91df4f401121a506942dd93a8533fbbf73d108b8264d39f68de8db42a4086632bb0195524b7664347f7f6e6c54d91f39aca99a29786d7e2309d5bc6a48fea9f4  90-ayn-thor-touchscreen.rules
+2262208bdf22a4857b022245fc275485d42b4996226ce88360a3b393da2d194b5ea8dd845aef9bc7232acd307985510f741404f46eebdbbe5f4744c4d65ac097  deviceinfo
+8964e889e1863df8e49e5e516d315150abbe67ed16be5000f957fbde763c12adc3285560e44516fa73f6e6123014c944ea1319c4b6ea91324de689b9b1af07da  kcminputrc
+b435f4c6751b99cfa94fed28921aaada1673e634000a18a28466e62e34760465f27fe932afccde70b39df7ab87a869bfd887ee74469735569cec8ed0c3f0296d  kernel-cmdline.conf
+"

@@ -1,0 +1,125 @@
+maintainer="Seshan Ravikumar <seshan@sineware.ca>"
+pkgname=linux-ayn-thor
+pkgver=7.3_rc5
+pkgrel=0
+pkgdesc="Mainline kernel fork for AYN Thor"
+arch="aarch64"
+_carch="arm64"
+url="https://kernel.org"
+license="GPL-2.0-only"
+options="!strip
+	!check
+	!tracedeps
+	pmb:cross-native
+	pmb:kconfigcheck-community
+	pmb:kconfigcheck-rust
+	pmb:kconfigcheck-uefi
+	"
+makedepends="
+	bison
+	clang
+	clang-libclang
+	elfutils-dev
+	findutils
+	flex
+	linux-headers
+	lld
+	llvm
+	openssl-dev
+	pahole
+	perl
+	postmarketos-installkernel
+	python3
+	rust
+	rust-bindgen
+	rust-src
+	rustfmt
+	zstd
+"
+
+# the *_url variables below are separate for readability, to avoid
+# making the source lines too long
+
+# not upstream yet, the dispcc fix is needed to take over the display,
+# since the bootloader leaves them running when booting via EFI
+_rocknix_commit="fe127fad01f6006bea1734ebde87d1c02cc6d256"
+_rocknix_url="https://raw.githubusercontent.com/ROCKNIX/distribution/$_rocknix_commit/projects/ROCKNIX/devices/SM8550/patches/linux"
+
+# fixes for gamepad input drops, speaker amp mi2s clock
+_armada_commit="410bcf26a67f3e5d38e487d0ec84c5632f2bc3f6"
+_armada_url="https://raw.githubusercontent.com/armada-os/armada/$_armada_commit/packages/kernel/patches"
+
+# qcs8550-ayntec-common/thor DTs are pretty big as patches (and not checksum stable from cgit as a patch),
+# and queued for 7.4 anyway, so just download them for now as a backport. Then this will be dropped entirely soon
+_qcom_commit="ac99695769bab4d9e21b0458e0f7b0c2165fe2de"
+_qcom_dts_url="https://git.kernel.org/pub/scm/linux/kernel/git/qcom/linux.git/plain/arch/arm64/boot/dts/qcom"
+source="
+	$pkgname-$pkgver.tar.gz::https://git.kernel.org/torvalds/t/linux-${pkgver/_/-}.tar.gz
+	config-${pkgname#linux-}.$arch
+	PCI-qcom-Honor-IOMMU-provider-s-iommu-cells.patch
+	qcs8550-ayntec-common.dtsi::$_qcom_dts_url/qcs8550-ayntec-common.dtsi?id=$_qcom_commit
+	qcs8550-ayntec-thor.dts::$_qcom_dts_url/qcs8550-ayntec-thor.dts?id=$_qcom_commit
+	$_rocknix_url/0002-qcom-dispcc-sm8550-Fix-disp_cc_mdss_mdp_clk_src.patch
+	$_rocknix_url/0015-touchscreen-edt-ft5x06-allow-to-override-input-name.patch
+	$pkgname-0031_input--Add-driver-for-RSInput-Gamepad.patch::$_rocknix_url/0031_input--Add-driver-for-RSInput-Gamepad.patch
+	$_armada_url/0515-input-rsinput-reassemble-uart-frames-instead-of-dropping-them.patch
+	$_rocknix_url/0612-ROCKNIX-odin3-q6apm-start-mi2s-port-at-prepare.patch
+	$_armada_url/0613-ASoC-q6apm-scope-prepare-start-to-MI2S.patch
+	0001-arm64-dts-qcom-qcs8550-ayntec-thor-add-RSInput-gamepad.patch
+	0002-arm64-dts-qcom-qcs8550-ayntec-thor-label-touchscreens.patch
+"
+builddir="$srcdir/linux-${pkgver/_/-}"
+
+# Used internally by pmbootstrap. Don't touch.
+# TODO: Remove once minimum default pmbootstrap version supports
+# kernel packages without '_flavor' and '_config'.
+_flavor="${pkgname#linux-}"
+_config="config-${pkgname#linux-}.$arch"
+
+prepare() {
+	cp "$srcdir"/qcs8550-ayntec-common.dtsi "$srcdir"/qcs8550-ayntec-thor.dts \
+		arch/$_carch/boot/dts/qcom/
+	echo 'dtb-$(CONFIG_ARCH_QCOM) += qcs8550-ayntec-thor.dtb' \
+		>> arch/$_carch/boot/dts/qcom/Makefile
+
+	default_prepare
+
+	cp "$srcdir"/config-${pkgname#linux-}.$arch .config
+}
+
+build() {
+	unset LDFLAGS
+	make ARCH="$_carch" LLVM=1 \
+		KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-postmarketOS"
+}
+
+package() {
+	make zinstall modules_install dtbs_install \
+		ARCH="$_carch" \
+		LLVM=1 \
+		INSTALL_PATH="$pkgdir"/boot/ \
+		INSTALL_MOD_PATH="$pkgdir"/usr \
+		INSTALL_MOD_STRIP=1 \
+		INSTALL_DTBS_PATH="$pkgdir"/boot/dtbs
+
+	rm -f "$pkgdir"/usr/lib/modules/*/build "$pkgdir"/usr/lib/modules/*/source
+
+	install -Dm644 "$builddir"/include/config/kernel.release \
+		"$pkgdir"/usr/share/kernel/${pkgname#linux-}/kernel.release
+}
+
+sha512sums="
+fe50e127220cd89f903c11151929c8626c88219ea8b9462ce63cc9ad43987c8b1296d89037a475ab058629b51dfa2af53eb6999e7d0f96ea55ee0a04daf2b2b6  linux-ayn-thor-7.3_rc5.tar.gz
+09dd6a41ad173c09c2461a877228ab5c6938fe795d7c62839c47d2972ca00c7c299f6db3807292a6b82d612b71f2ebd5d185a55eba2fe2c262b9df073f0b26b0  config-ayn-thor.aarch64
+4f7006ad60c90a72fa3707104094b03bb5782526a5dd782b5b7fcf2d860ed2788a120df2f0bdcd4199f1bdb874de20f9119df7d6893210b8b77b21b683791977  PCI-qcom-Honor-IOMMU-provider-s-iommu-cells.patch
+e17c43726c45a524d9e74bc65f13a83968a3fcc151859df215516a786c5bb526a4a2b6d445d88ce0410b18dac91ae75ab55b607a62aba35b291f6d4197d3f7b2  qcs8550-ayntec-common.dtsi
+9237ad2595ec2f1d05d1e030eda96c7904ae88b5462313a56035c18ed19811f1531b51adc6f34ca1038283aeb38fe39fcb7f55f15e1d42a48c78e0301051d5a0  qcs8550-ayntec-thor.dts
+2c2a952b8a8225e0e1d49cbc1f3ff010dcf8b52eb9f9e818ad8dc84d4bf1dbda2624f839aa8a407cfaad4d72e603227075c1da4430a9abd56423bd28d8423457  0002-qcom-dispcc-sm8550-Fix-disp_cc_mdss_mdp_clk_src.patch
+356251a1297d7a8b33b3b200b50dc4279be097333232448900747016293bdc8b8586898ba0525dc38e96067f6f21823bb8e85bff61f011a718b46a9d53487160  0015-touchscreen-edt-ft5x06-allow-to-override-input-name.patch
+b66a34e90bcd4190705eaec7080bfb83b997c05000cd42b1128c495a1bead64baaf745a0df67952019b60b0d9c70e0a8831e666beee373bc02dbd1128b928eca  linux-ayn-thor-0031_input--Add-driver-for-RSInput-Gamepad.patch
+fbe9a4dfd59873462efbb426b4d1204418f876b5600cc2ccc5af3129885049b9a47832642455a1277f226094ceca185d27fbb930e1e3a8e6c3c87f5d43383029  0515-input-rsinput-reassemble-uart-frames-instead-of-dropping-them.patch
+2bbb85b12d24035599ab9e3128abb6477539d3003068b382675328cf91f68105b95182bf103bb1b22a122d3ce7311b390dcc6ebce6edb80d4f99465b996a12c2  0612-ROCKNIX-odin3-q6apm-start-mi2s-port-at-prepare.patch
+153ec2026b96dec98df03dbfaa9f10fea8d0a75785fe37a0a91e030f2d11d6ea5beb984ca3d98cf48a406e1518fd85c62568778458c83a90a1807a5fd04bea09  0613-ASoC-q6apm-scope-prepare-start-to-MI2S.patch
+9259ccaad87de289e9c3386c7f521ac49ff621a2db8bd5a0e20c323c9c8370b126f3567bb91febf7f667c639139e9948422cc333819875e1628b5f79b8ab1c61  0001-arm64-dts-qcom-qcs8550-ayntec-thor-add-RSInput-gamepad.patch
+01b067c898615301b83c7ec5b86fc430e78b879e2a6f98a81c335627dd245336468e8399ba495c52211c858d3bf158bc867ec223804b5a501a2753db62b57e87  0002-arm64-dts-qcom-qcs8550-ayntec-thor-label-touchscreens.patch
+"

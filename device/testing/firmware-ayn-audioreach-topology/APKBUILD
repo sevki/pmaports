@@ -2,7 +2,7 @@ maintainer="Anton Bambura <jenneron@protonmail.com>"
 pkgname=firmware-ayn-audioreach-topology
 pkgver=0_git20260415
 _commit="37be59126ccaf89943a0921bca0de6d2b84e5419"
-pkgrel=0
+pkgrel=1
 pkgdesc="Audioreach Topology for AYN Odin 2 and 3"
 url="https://github.com/AYNTechnologies/audioreach-topology"
 # these files are not specific to cpu architecture, but only make sense on aarch64 devices
@@ -22,6 +22,9 @@ build() {
 package() {
 	install -Dm644 build/qcom/sm8550/SM8550-AYN-tplg.bin \
 		-t "$pkgdir"/usr/lib/firmware/qcom/sm8550
+	# the upstream sm8550 AYN DTs name the sound card AYN-Odin2
+	ln -s SM8550-AYN-tplg.bin \
+		"$pkgdir"/usr/lib/firmware/qcom/sm8550/AYN-Odin2-tplg.bin
 	install -Dm644 build/qcom/sm8750/SM8750-AYN-tplg.bin \
 		-t "$pkgdir"/usr/lib/firmware/qcom/sm8750
 }

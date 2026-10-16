@@ -2,23 +2,31 @@ maintainer="Anton Bambura <jenneron@protonmail.com>"
 pkgname=alsa-ucm-conf-ayn
 pkgver=1.2.15.3_git20260415
 _commit="52b6ae98b7cd01e35ab6d193f953394dcefe5c0e"
-pkgrel=0
-pkgdesc="ALSA UCM configuration for AYN Odin 2 and 3 devices"
-url="https://gitlab.com/sdm845-mainline/alsa-ucm-conf"
+pkgrel=1
+pkgdesc="ALSA UCM configuration for AYN Odin 2, Odin 3 and Thor devices"
+url="https://github.com/AYNTechnologies/alsa-ucm-conf"
 arch="aarch64"
 license="BSD-3-Clause"
 provides="alsa-ucm-conf=0.${pkgver%_*}" # versioned provides need to be below default version
 provider_priority=1
-source="$pkgname-$_commit.tar.gz::https://github.com/AYNTechnologies/alsa-ucm-conf/archive/$_commit.tar.gz"
+_rocknix_commit="fe127fad01f6006bea1734ebde87d1c02cc6d256"
+source="
+	$pkgname-$_commit.tar.gz::https://github.com/AYNTechnologies/alsa-ucm-conf/archive/$_commit.tar.gz
+	https://raw.githubusercontent.com/ROCKNIX/distribution/$_rocknix_commit/projects/ROCKNIX/packages/audio/alsa-ucm-conf/patches/SM8550/0005_Add-AYN-Thor.patch
+"
 options="!check"
-builddir="$srcdir/$pkgname-$_commit"
+builddir="$srcdir/alsa-ucm-conf-$_commit"
 
 package() {
 	mkdir -p "$pkgdir"/usr/share/alsa
-	cp -r "$srcdir/alsa-ucm-conf-$_commit"/ucm2 \
+	cp -r "$builddir"/ucm2 \
 		"$pkgdir"/usr/share/alsa/
+	# the upstream sm8550 AYN DTs name the sound card AYN-Odin2
+	ln -s ../../AYN/Thor/AYN-Thor.conf \
+		"$pkgdir"/usr/share/alsa/ucm2/conf.d/sm8550/AYN-Odin2.conf
 }
 
 sha512sums="
 a055338023f86cfe6410e330ebc3551dfeaa2857ccbd4aa6d3afa8e8d5555fb6d7db1be4040b5d254edd3e4147c54060fb452b987d158ae8b68339d8f5e79a8d  alsa-ucm-conf-ayn-52b6ae98b7cd01e35ab6d193f953394dcefe5c0e.tar.gz
+a2b26b8e3915b788ae7515b8ef2641eec4693a875deaf8e84aa4fdced70b43b7859c563d0edfa45b7c38c42974fbd0cf6bdf6f85b7e533fa4b36afc3804aaad8  0005_Add-AYN-Thor.patch
 "
