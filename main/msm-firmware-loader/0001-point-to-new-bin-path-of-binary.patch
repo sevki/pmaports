@@ -1,0 +1,67 @@
+From 3a348ff5abb039d993d422cae04973e2e54628d3 Mon Sep 17 00:00:00 2001
+From: Aster Boese <asterboese@mailbox.org>
+Date: Tue, 13 Oct 2026 18:12:45 -0400
+Subject: [PATCH] point to new bin path of binary
+
+Signed-off-by: Aster Boese <asterboese@mailbox.org>
+---
+ msm-firmware-loader-unpack.initd   | 2 +-
+ msm-firmware-loader-unpack.service | 2 +-
+ msm-firmware-loader.initd          | 2 +-
+ msm-firmware-loader.service        | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/msm-firmware-loader-unpack.initd b/msm-firmware-loader-unpack.initd
+index 0eb7341..9a1100b 100644
+--- a/msm-firmware-loader-unpack.initd
++++ b/msm-firmware-loader-unpack.initd
+@@ -10,7 +10,7 @@ depend() {
+ start() {
+ 	ebegin "Starting msm-firmware-loader (Unpacking the firmware)"
+ 	# This script must be executed before rmtfs, block other services until it's done.
+-	/usr/sbin/msm-firmware-loader-unpack.sh
++	/usr/bin/msm-firmware-loader-unpack.sh
+ 	eend $?
+ }
+ 
+diff --git a/msm-firmware-loader-unpack.service b/msm-firmware-loader-unpack.service
+index a10f2a8..d75b6a3 100644
+--- a/msm-firmware-loader-unpack.service
++++ b/msm-firmware-loader-unpack.service
+@@ -3,7 +3,7 @@ Description=Unpack dynamically loaded firmware
+ Before=rmtfs.service
+ 
+ [Service]
+-ExecStart=/usr/sbin/msm-firmware-loader-unpack.sh
++ExecStart=/usr/bin/msm-firmware-loader-unpack.sh
+ Type=oneshot
+ RemainAfterExit=yes
+ 
+diff --git a/msm-firmware-loader.initd b/msm-firmware-loader.initd
+index 7d2b9ef..b87ae00 100644
+--- a/msm-firmware-loader.initd
++++ b/msm-firmware-loader.initd
+@@ -11,6 +11,6 @@ depend() {
+ start() {
+ 	ebegin "Starting msm-firmware-loader"
+ 	# This script must be executed before udev, block other services until it's done.
+-	/usr/sbin/msm-firmware-loader.sh
++	/usr/bin/msm-firmware-loader.sh
+ 	eend $?
+ }
+diff --git a/msm-firmware-loader.service b/msm-firmware-loader.service
+index a1e1f17..7df9aa9 100644
+--- a/msm-firmware-loader.service
++++ b/msm-firmware-loader.service
+@@ -5,7 +5,7 @@ DefaultDependencies=no
+ RequiresMountsFor=/sys /dev
+ 
+ [Service]
+-ExecStart=/usr/sbin/msm-firmware-loader.sh
++ExecStart=/usr/bin/msm-firmware-loader.sh
+ Type=oneshot
+ RemainAfterExit=yes
+ 
+-- 
+2.56.0
+
