@@ -150,7 +150,8 @@ alsa_utils() {
 }
 
 wayland() {
-	install_if="$pkgname=$pkgver-r$pkgrel wayland-server-libs"
+	install_if="$pkgname=$pkgver-r$pkgrel wayland-libs-server"
+	depends="clampazzo"
 
 	mkdir -p "$subpkgdir"
 }
