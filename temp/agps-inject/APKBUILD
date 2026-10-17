@@ -1,0 +1,35 @@
+maintainer="Jan-Michael Brummer <jan.brummer@tabos.org>"
+pkgname=agps-inject
+pkgver=1.0.0
+pkgrel=0
+pkgdesc="Periodically download and inject GNSS assistance data (XTRA) via ModemManager"
+url="https://postmarketos.org"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="modemmanager"
+subpackages="$pkgname-systemd"
+source="
+	agps-inject
+	agps-inject.service
+	agps-inject.timer
+	90-agps-inject.preset
+	"
+options="!check" # no testsuite
+
+package() {
+	install -Dm755 "$srcdir"/agps-inject \
+		"$pkgdir"/usr/libexec/agps-inject
+	install -Dm644 "$srcdir"/agps-inject.service \
+		"$pkgdir"/usr/lib/systemd/system/agps-inject.service
+	install -Dm644 "$srcdir"/agps-inject.timer \
+		"$pkgdir"/usr/lib/systemd/system/agps-inject.timer
+	install -Dm644 "$srcdir"/90-agps-inject.preset \
+		"$pkgdir"/usr/lib/systemd/system-preset/90-agps-inject.preset
+}
+
+sha512sums="
+0d342dd28cf430feb8205a5cfce1e1c19036c317757629f8058648adca0128dd5aa6631c21f859bec14f7affbd928d66079f868a96780d419b40ac3568b469f8  agps-inject
+b16a72bc9c2f8ac663640a6dab33bd508db0d3b25703c44e059531c2bedfce0763fd77ae64cd5ff9492f006d8a76de1be662b67feaf558774c46cb2ff0f43b00  agps-inject.service
+dcad3055312ca21ca2e10e58fb58a3676a0cf16495f940a4f89bac56fe4e9b293e7c0cec1c5e611d4ab1b0a13e61ea4bdc51a29558839e169fd60c9a5843c410  agps-inject.timer
+74e00d444fdb974316a74c0d721ed02ac384ac1758c549c5b0cab517837fc49f0bc0b7de8a0b8c8ee94ad25615556c3766d2ab76ac225a3caf2827431885d6d3  90-agps-inject.preset
+"
