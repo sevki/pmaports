@@ -1,0 +1,298 @@
+--- a/drivers/input/touchscreen/goodix_berlin_core.c	2026-09-26 12:14:30.762320306 +0200
++++ b/drivers/input/touchscreen/goodix_berlin_core.c	2026-09-26 12:14:56.222056645 +0200
+@@ -60,6 +60,10 @@
+ 
+ #define GOODIX_BERLIN_CHECKSUM_SIZE		sizeof(u16)
+ 
++#define GOODIX_BERLIN_CMD_MODE_SET		0x04
++#define GOODIX_BERLIN_MODE_NORMAL		0x14
++#define GOODIX_BERLIN_MODE_PEN_OFF		0x15
++
+ struct goodix_berlin_fw_version {
+ 	u8 rom_pid[6];
+ 	u8 rom_vid[3];
+@@ -170,14 +174,21 @@
+ 	struct touchscreen_properties props;
+ 	struct goodix_berlin_fw_version fw_version;
+ 	struct input_dev *input_dev;
++	struct input_dev *input_pen_dev;
+ 	int irq;
+ 
+ 	/* Runtime parameters extracted from IC_INFO buffer  */
+ 	u32 touch_data_addr;
++	u32 cmd_addr;
++	u16 cmd_max_len;
++	u32 cmd_reply_addr;
++	u16 cmd_reply_len;
+ 
+ 	const struct goodix_berlin_ic_data *ic_data;
+ 
+ 	struct goodix_berlin_event event;
++	bool stylus_active;
++	u8 writemode;
+ };
+ 
+ static bool goodix_berlin_checksum_valid(const u8 *data, int size)
+@@ -197,6 +208,41 @@
+ 	return (u16)cal_checksum == r_checksum;
+ }
+ 
++static int goodix_berlin_send_cmd(struct goodix_berlin_core *cd, u8 cmd, u8 subcmd)
++{
++	u8 buf[16] = {0};
++	u16 checksum = 0;
++	int i, len;
++	int error;
++
++	if (!cd->cmd_addr) {
++		dev_warn(cd->dev, "cmd_addr is null, cannot send cmd\n");
++		return -EINVAL;
++	}
++
++	buf[0] = 0x01; /* CMD ready / send */
++	buf[1] = 0x00; /* ACK */
++	buf[2] = 0x02; /* payload length */
++	buf[3] = cmd;  /* 0x04 mode set */
++	buf[4] = subcmd; /* 0x14 pen on */
++
++	len = 5;
++	for (i = 0; i < len; i++)
++		checksum += buf[i];
++
++	put_unaligned_le16(checksum, &buf[len]);
++
++	error = regmap_raw_write(cd->regmap, cd->cmd_addr, buf, len + sizeof(u16));
++	if (error) {
++		dev_err(cd->dev, "failed to send cmd 0x%02x 0x%02x: %d\n", cmd, subcmd, error);
++		return error;
++	}
++
++	dev_info(cd->dev, "Goodix Berlin: sent command 0x%02x 0x%02x to 0x%08x\n",
++		 cmd, subcmd, cd->cmd_addr);
++	return 0;
++}
++
+ static bool goodix_berlin_is_dummy_data(struct goodix_berlin_core *cd,
+ 					const u8 *data, int size)
+ {
+@@ -349,6 +395,10 @@
+ 
+ 	misc = (struct goodix_berlin_ic_info_misc *)&data[offset];
+ 	cd->touch_data_addr = le32_to_cpu(misc->touch_data_addr);
++	cd->cmd_addr = le32_to_cpu(misc->cmd_addr);
++	cd->cmd_max_len = le16_to_cpu(misc->cmd_max_len);
++	cd->cmd_reply_addr = le32_to_cpu(misc->cmd_reply_addr);
++	cd->cmd_reply_len = le16_to_cpu(misc->cmd_reply_len);
+ 
+ 	return 0;
+ 
+@@ -441,13 +491,34 @@
+ 	int i;
+ 	u8 type, id;
+ 
++	bool stylus_seen = false;
++
+ 	for (i = 0; i < n; i++) {
+ 		t = &touch_data[i];
+ 
+ 		type = FIELD_GET(GOODIX_BERLIN_POINT_TYPE_MASK, t->status);
+ 		if (type == GOODIX_BERLIN_POINT_TYPE_STYLUS ||
+ 		    type == GOODIX_BERLIN_POINT_TYPE_STYLUS_HOVER) {
+-			dev_warn_once(cd->dev, "Stylus event type not handled\n");
++			if (cd->input_pen_dev) {
++				u16 x = __le16_to_cpu(t->x);
++				u16 y = __le16_to_cpu(t->y);
++				u16 p = (type == GOODIX_BERLIN_POINT_TYPE_STYLUS) ?
++					__le16_to_cpu(t->w) : 0;
++
++				stylus_seen = true;
++				cd->stylus_active = true;
++
++				input_report_key(cd->input_pen_dev, BTN_TOOL_PEN, 1);
++				input_report_key(cd->input_pen_dev, BTN_TOUCH,
++						 type == GOODIX_BERLIN_POINT_TYPE_STYLUS);
++				input_report_key(cd->input_pen_dev, BTN_STYLUS,
++						 !!(t->reserved & BIT(0)));
++				input_report_key(cd->input_pen_dev, BTN_STYLUS2,
++						 !!(t->reserved & BIT(1)));
++				input_report_abs(cd->input_pen_dev, ABS_PRESSURE, p);
++				touchscreen_report_pos(cd->input_pen_dev, &cd->props, x, y, false);
++				input_sync(cd->input_pen_dev);
++			}
+ 			continue;
+ 		}
+ 
+@@ -467,6 +538,16 @@
+ 				 __le16_to_cpu(t->w));
+ 	}
+ 
++	if (cd->input_pen_dev && cd->stylus_active && !stylus_seen) {
++		input_report_key(cd->input_pen_dev, BTN_TOUCH, 0);
++		input_report_key(cd->input_pen_dev, BTN_STYLUS, 0);
++		input_report_key(cd->input_pen_dev, BTN_STYLUS2, 0);
++		input_report_abs(cd->input_pen_dev, ABS_PRESSURE, 0);
++		input_report_key(cd->input_pen_dev, BTN_TOOL_PEN, 0);
++		input_sync(cd->input_pen_dev);
++		cd->stylus_active = false;
++	}
++
+ 	input_mt_sync_frame(cd->input_dev);
+ 	input_sync(cd->input_dev);
+ }
+@@ -491,12 +572,27 @@
+ 	}
+ 
+ 	if (touch_num) {
+-		int len = touch_num * GOODIX_BERLIN_TOUCH_SIZE +
+-			  GOODIX_BERLIN_CHECKSUM_SIZE;
+-		if (!goodix_berlin_checksum_valid(cd->event.data, len)) {
+-			dev_err(cd->dev, "touch data checksum error: %*ph\n",
+-				len, cd->event.data);
+-			return;
++		struct goodix_berlin_touch *t = (struct goodix_berlin_touch *)cd->event.data;
++		bool has_stylus = false;
++		int i;
++
++		for (i = 0; i < min_t(int, touch_num, 2); i++) {
++			u8 type = FIELD_GET(GOODIX_BERLIN_POINT_TYPE_MASK, t[i].status);
++			if (type == GOODIX_BERLIN_POINT_TYPE_STYLUS ||
++			    type == GOODIX_BERLIN_POINT_TYPE_STYLUS_HOVER) {
++				has_stylus = true;
++				break;
++			}
++		}
++
++		if (!has_stylus) {
++			int len = touch_num * GOODIX_BERLIN_TOUCH_SIZE +
++				  GOODIX_BERLIN_CHECKSUM_SIZE;
++			if (!goodix_berlin_checksum_valid(cd->event.data, len)) {
++				dev_err(cd->dev, "touch data checksum error: %*ph\n",
++					len, cd->event.data);
++				return;
++			}
+ 		}
+ 	}
+ 
+@@ -511,6 +607,9 @@
+ 
+ 	msleep(GOODIX_BERLIN_NORMAL_RESET_DELAY_MS);
+ 
++	/* Re-enable pen mode after reset */
++	goodix_berlin_send_cmd(cd, GOODIX_BERLIN_CMD_MODE_SET, GOODIX_BERLIN_MODE_NORMAL);
++
+ 	return 0;
+ }
+ 
+@@ -602,10 +701,35 @@
+ 	return IRQ_HANDLED;
+ }
+ 
++static ssize_t writemode_show(struct device *dev, struct device_attribute *attr, char *buf)
++{
++	struct goodix_berlin_core *cd = dev_get_drvdata(dev);
++	return sprintf(buf, "%d\n", cd->writemode);
++}
++
++static ssize_t writemode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
++{
++	struct goodix_berlin_core *cd = dev_get_drvdata(dev);
++	unsigned int val;
++	int ret;
++
++	if (kstrtouint(buf, 10, &val))
++		return -EINVAL;
++
++	cd->writemode = (u8)val;
++	if (val == 1)
++		ret = goodix_berlin_send_cmd(cd, GOODIX_BERLIN_CMD_MODE_SET, GOODIX_BERLIN_MODE_NORMAL);
++	else
++		ret = goodix_berlin_send_cmd(cd, GOODIX_BERLIN_CMD_MODE_SET, GOODIX_BERLIN_MODE_NORMAL);
++
++	return ret ? ret : count;
++}
++static DEVICE_ATTR_RW(writemode);
++
+ static int goodix_berlin_input_dev_config(struct goodix_berlin_core *cd,
+ 					  const struct input_id *id)
+ {
+-	struct input_dev *input_dev;
++	struct input_dev *input_dev, *input_pen_dev;
+ 	int error;
+ 
+ 	input_dev = devm_input_allocate_device(cd->dev);
+@@ -645,6 +769,39 @@
+ 	if (error)
+ 		return error;
+ 
++	/* Separate input device for Active Stylus */
++	input_pen_dev = devm_input_allocate_device(cd->dev);
++	if (input_pen_dev) {
++		cd->input_pen_dev = input_pen_dev;
++		input_set_drvdata(input_pen_dev, cd);
++
++		input_pen_dev->name = "Goodix Berlin Active Stylus";
++		input_pen_dev->phys = "input/ts-pen";
++		input_pen_dev->id = *id;
++
++		input_set_abs_params(input_pen_dev, ABS_X, 0, cd->props.max_x ? cd->props.max_x : 2559, 0, 0);
++		input_set_abs_params(input_pen_dev, ABS_Y, 0, cd->props.max_y ? cd->props.max_y : 1599, 0, 0);
++		input_set_abs_params(input_pen_dev, ABS_PRESSURE, 0, 4095, 0, 0);
++
++		input_abs_set_res(input_pen_dev, ABS_X, 10);
++		input_abs_set_res(input_pen_dev, ABS_Y, 10);
++
++		input_set_capability(input_pen_dev, EV_KEY, BTN_TOOL_PEN);
++		input_set_capability(input_pen_dev, EV_KEY, BTN_TOUCH);
++		input_set_capability(input_pen_dev, EV_KEY, BTN_STYLUS);
++		input_set_capability(input_pen_dev, EV_KEY, BTN_STYLUS2);
++
++		__set_bit(INPUT_PROP_DIRECT, input_pen_dev->propbit);
++
++		error = input_register_device(input_pen_dev);
++		if (error) {
++			dev_warn(cd->dev, "Failed to register pen input device: %d\n", error);
++			cd->input_pen_dev = NULL;
++		}
++	}
++
++	device_create_file(cd->dev, &dev_attr_writemode);
++
+ 	return 0;
+ }
+ 
+@@ -667,6 +824,9 @@
+ 	if (error)
+ 		return error;
+ 
++	/* Re-enable pen mode after power on */
++	goodix_berlin_send_cmd(cd, GOODIX_BERLIN_CMD_MODE_SET, GOODIX_BERLIN_MODE_NORMAL);
++
+ 	enable_irq(cd->irq);
+ 
+ 	return 0;
+@@ -679,6 +839,7 @@
+ {
+ 	struct goodix_berlin_core *cd = data;
+ 
++	device_remove_file(cd->dev, &dev_attr_writemode);
+ 	goodix_berlin_power_off(cd);
+ }
+ 
+@@ -745,6 +906,7 @@
+ 	cd->regmap = regmap;
+ 	cd->irq = irq;
+ 	cd->ic_data = ic_data;
++	cd->writemode = 1; /* Default to Pen Enabled */
+ 
+ 	cd->reset_gpio = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_HIGH);
+ 	if (IS_ERR(cd->reset_gpio))
+@@ -783,6 +945,9 @@
+ 		return error;
+ 	}
+ 
++	/* Send PEN_ON command (0x04 0x14) to enable active pen scanning mode */
++	goodix_berlin_send_cmd(cd, GOODIX_BERLIN_CMD_MODE_SET, GOODIX_BERLIN_MODE_NORMAL);
++
+ 	error = goodix_berlin_input_dev_config(cd, id);
+ 	if (error) {
+ 		dev_err(dev, "failed set input device");

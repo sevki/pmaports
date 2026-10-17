@@ -1,0 +1,125 @@
+--- a/arch/arm64/boot/dts/qcom/sm8250-lenovo-q706f.dts	2026-09-11 19:54:39.000000000 +0200
++++ b/arch/arm64/boot/dts/qcom/sm8250-lenovo-q706f.dts	2026-09-26 16:49:43.836388197 +0200
+@@ -188,6 +188,15 @@
+ 		regulator-always-on;
+ 	};
+ 
++	audio_as33970_reset: audio-as33970-reset-regulator {
++		compatible = "regulator-fixed";
++		regulator-name = "audio_as33970_reset";
++		gpio = <&tlmm 22 GPIO_ACTIVE_HIGH>;
++		enable-active-high;
++		regulator-boot-on;
++		regulator-always-on;
++	};
++
+ 	usb_vbus_5p0: usb-vbus-5p0-regulator {
+ 		compatible = "regulator-fixed";
+ 		regulator-name = "usb_vbus_5p0";
+@@ -1213,12 +1222,40 @@
+ 		qcom,tdm-data-delay = <1>;
+ 		qcom,tdm-data-align = <0>;
+ 	};
++
++	dai@25 {
++		reg = <PRIMARY_TDM_TX_0>;
++		qcom,tdm-sync-mode = <0>;
++		qcom,tdm-sync-src = <1>;
++		qcom,tdm-data-out = <0>;
++		qcom,tdm-invert-sync = <0>;
++		qcom,tdm-data-delay = <1>;
++		qcom,tdm-data-align = <0>;
++	};
++
++	dai@27 {
++		reg = <PRIMARY_TDM_TX_1>;
++		qcom,tdm-sync-mode = <0>;
++		qcom,tdm-sync-src = <1>;
++		qcom,tdm-data-out = <0>;
++		qcom,tdm-invert-sync = <0>;
++		qcom,tdm-data-delay = <1>;
++		qcom,tdm-data-align = <0>;
++	};
+ };
+ 
+ &q6asmdai {
+ 	dai@0 {
+ 		reg = <0>;
+ 	};
++
++	dai@1 {
++		reg = <1>;
++	};
++
++	dai@2 {
++		reg = <2>;
++	};
+ };
+ 
+ 
+@@ -1235,12 +1272,65 @@
+ 
+ 	mm1-dai-link {
+ 		link-name = "MultiMedia1";
++		id = <MSM_FRONTEND_DAI_MULTIMEDIA1>;
+ 
+ 		cpu {
+ 			sound-dai = <&q6asmdai  MSM_FRONTEND_DAI_MULTIMEDIA1>;
+ 		};
+ 	};
+ 
++	mm2-dai-link {
++		link-name = "MultiMedia2";
++		id = <MSM_FRONTEND_DAI_MULTIMEDIA2>;
++
++		cpu {
++			sound-dai = <&q6asmdai  MSM_FRONTEND_DAI_MULTIMEDIA2>;
++		};
++	};
++
++	mm3-dai-link {
++		link-name = "MultiMedia3";
++		id = <MSM_FRONTEND_DAI_MULTIMEDIA3>;
++
++		cpu {
++			sound-dai = <&q6asmdai  MSM_FRONTEND_DAI_MULTIMEDIA3>;
++		};
++	};
++
++	mic-dai-link {
++		link-name = "Primary TDM Capture";
++		id = <PRIMARY_TDM_TX_0>;
++
++		cpu {
++			sound-dai = <&q6afedai PRIMARY_TDM_TX_0>;
++		};
++
++		platform {
++			sound-dai = <&q6routing>;
++		};
++
++		codec {
++			sound-dai = <&q6afedai PRIMARY_TDM_TX_0>;
++		};
++	};
++
++	mic1-dai-link {
++		link-name = "Primary TDM Capture 1";
++		id = <PRIMARY_TDM_TX_1>;
++
++		cpu {
++			sound-dai = <&q6afedai PRIMARY_TDM_TX_1>;
++		};
++
++		platform {
++			sound-dai = <&q6routing>;
++		};
++
++		codec {
++			sound-dai = <&q6afedai PRIMARY_TDM_TX_1>;
++		};
++	};
++
+ 	speaker-dai-link {
+ 		link-name = "Primary TDM Playback";
+ 
