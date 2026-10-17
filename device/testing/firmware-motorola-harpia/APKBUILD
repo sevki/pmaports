@@ -1,0 +1,51 @@
+maintainer="Aster Boese <asterboese@mailbox.org>"
+pkgname=firmware-motorola-harpia
+pkgver=5
+pkgrel=0
+_commit="a81be710b0ff4ee7e5fd1962184dcd882cc13efc"
+_osprey_commit="a47c5a1c2dd806226c61305c9c97135f2734d0c7"
+pkgdesc="Firmware for Motorola Moto G4 Play"
+url="https://github.com/Sorixelle/vendor_motorola_harpia"
+arch="aarch64"
+license="proprietary"
+makedepends="pil-squasher"
+source="$pkgname-$_commit.tar.gz::https://github.com/Sorixelle/vendor_motorola_harpia/archive/$_commit.tar.gz
+	https://github.com/pmsourcedump/firmware-motorola-osprey/raw/$_osprey_commit/wcnss.mdt
+	"
+options="
+	!archcheck
+	!check
+	!strip
+	!tracedeps
+	pmb:cross-native
+	"
+builddir="$srcdir/vendor_motorola_harpia-$_commit"
+
+build() {
+	# venus.mbn exists already but seems a bit different
+	pil-squasher venus2.mbn venus.mdt
+	pil-squasher wcnss.mbn wcnss.mdt
+}
+
+package() {
+	install -Dm644 "$builddir"/wlan/prima/WCNSS_qcom_wlan_nv.bin \
+		-t "$pkgdir"/usr/lib/firmware/postmarketos/wlan/prima
+
+	# Linux detects squashed (.mbn) vs non-squashed (.mdt + .b*) based on
+	# file contents, so it is fine to link venus.mbn to venus.mdt
+	# Older kernels look for venus.mdt, newer ones directly for venus.mbn
+	install -Dm644 "$builddir"/venus2.mbn \
+		"$pkgdir"/usr/lib/firmware/postmarketos/qcom/venus-1.8/venus.mbn
+	ln -s venus.mbn \
+		"$pkgdir"/usr/lib/firmware/postmarketos/qcom/venus-1.8/venus.mdt
+
+	install -Dm644 "$builddir"/wcnss.mbn \
+		"$pkgdir"/usr/lib/firmware/postmarketos/wcnss.mbn
+	ln -s wcnss.mbn \
+		"$pkgdir"/usr/lib/firmware/postmarketos/wcnss.mdt
+}
+
+sha512sums="
+56a7f815bea3d20a5ef0241ae109ac3823c6ac433e2a05389035b7005c7966d7a0a7719dbf5a562c6cf53c18cebd6893d31d27a6efc1a50c307565f873b1aa54  firmware-motorola-harpia-a81be710b0ff4ee7e5fd1962184dcd882cc13efc.tar.gz
+ab77bf61f67ac789822ca88d02757288084758ce8970f58eb2e65fb5eb66735028d36f59c55e99463d6e1d992b567c545f9a5de34c878d511408c288ac42aae1  wcnss.mdt
+"
