@@ -2,7 +2,7 @@ maintainer="Antoine Martin (ayakael) <dev@ayakael.net>"
 pkgname=linux-postmarketos-rockchip
 pkgver=7.2.9
 _kernver=${pkgver%.*}
-pkgrel=0
+pkgrel=1
 pkgdesc="Mainline kernel for rockchip devices"
 arch="aarch64"
 _carch="arm64"
@@ -23,6 +23,7 @@ makedepends="
 	elfutils-dev
 	findutils
 	flex
+	gzip
 	kmod
 	linux-headers
 	lld
@@ -40,8 +41,15 @@ makedepends="
 	zstd
 "
 # to allow A/B comparison testing
-replaces="linux-pine64-pinenote"
-provides="linux-pine64-pinenote=$pkgver-r$pkgrel"
+
+replaces="
+	linux-pine64-pinenote
+	linux-clockworkpi-uconsole-radxa-cm5
+	"
+provides="
+	linux-pine64-pinenote=$pkgver-r$pkgrel
+	linux-clockworkpi-uconsole-radxa-cm5=$pkgver-r$pkgrel
+	"
 
 # Source
 _config="config-$_flavor.$arch"
@@ -54,6 +62,9 @@ source="
 	https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/linux-$_kernver.tar.xz
 	rk3566-pinenote-support.patch
 	rk3566-pinenote-ultra-suspend.patch
+	0001-video-backlight-Add-OCP8178-backlight-driver.patch
+	0002-drm-panel-add-cwu50-panel-driver.patch
+	0003-arch-dts-add-uConsole-Radxa-CM5-device-tree.patch
 	$_config
 "
 builddir="$srcdir"/linux-$_kernver
@@ -104,5 +115,8 @@ sha512sums="
 47e63679363261a864d271277340a6f2d45f544e1a056be4159df081f4f6537d0efa865c4af26611ab33a3079ee65db88ec2f6bc0e5fff43e0c043cde0cd91e1  linux-7.2.tar.xz
 2f72573bdcb9ab664845487463605a2b503e9640d38878bd663c829c66cfd13c6bf73c0bd200c5530e5e87e4887e47af93a413dd8cc2eb643613bed028aeef07  rk3566-pinenote-support.patch
 bcb43e41178eceb20713720644afca63715d6a17a5c3fbd2b6cec43be173d2327e004f569deb953a2bd5a0566e1773a79ad5ad7ce5f30f3942d1e0978693cee8  rk3566-pinenote-ultra-suspend.patch
-7abd4c96ce5a0a6887fb41f2177cca2d929af0fb4f75efbce52f92cd19bc47e896d323074dab4914d940b76b51f2a0948e4da2b1018d473ad67e40e02ecae57d  config-postmarketos-rockchip.aarch64
+128d1bc610b79b2faa9fffff797cccc29d9f8777de61d6fc618bd6fa1091262b509ee7c2126cfd328825856c9962ef07948d6b9e7d899e53ac647f4b5defb5ca  0001-video-backlight-Add-OCP8178-backlight-driver.patch
+eae848984e9e903fc05acc692ff176a8764e8340dfe59115d6f05f711c837b9dfbb80abfbce738c01b6f59b3796ed891b25c3b2085289ad886978895f194f04b  0002-drm-panel-add-cwu50-panel-driver.patch
+61b6d8fab5cf63ded83443620fc853f41b6c41ecf52f38366c1672bd64555bc31fefca7954945d4dd67a1fcb941c126e990b48ba32b3c1909966303a127ce36b  0003-arch-dts-add-uConsole-Radxa-CM5-device-tree.patch
+04c7eb9efc13598dc96ef9b04ae3d62f07ebf008667f9a740d7f1b2cd171961e4255fdb4e0c3c5ceceb6a65c1206e90c9f7ba0f1a86dc846976bfbb84a606c52  config-postmarketos-rockchip.aarch64
 "
