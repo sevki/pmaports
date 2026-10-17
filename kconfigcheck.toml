@@ -30,6 +30,7 @@ community = [
 	"category:wine",
 	"category:wireguard",
 	"category:zram",
+        "category:compression",
 ]
 
 # Format for rule sections:
@@ -83,28 +84,12 @@ DEVPTS_MULTIPLE_INSTANCES = "y"
 ["category:default"."<4.14.0"."all"]
 SAMSUNG_TUI = "n"
 TZDEV = "n"
-["category:default".">=5.1.0"."all"]
-RD_ZSTD = "y"
-DECOMPRESS_ZSTD = "y" # Different from MODULE_DECOMPRESS
 ["category:default"."<5.2.0"."armhf armv7 x86"]
 LBDAF = "y"
 ["category:default".">=5.2.0"."all"]
 # Provide a proper dummy null console to improve compatibility
 # on devices that like to coerce console=null
 NULL_TTY = "m"
-# MODULE_COMPRESS was added after the individual compression algorithm options
-["category:default".">=6.12.0"."all"]
-MODULE_COMPRESS = "y"
-["category:default".">=6.2.0"."all"]
-# MODULE_COMPRESS_ZSTD exists since 5.13, but since kernels prior to 6.2 cannot
-# decompress it, we would break devices with split initramfs which use busybox
-# modprobe, so we only enforce it on 6.2 or newer
-MODULE_COMPRESS_ZSTD = "y"
-# MODULE_DECOMPRESS exists since 5.17, but can only decompress zstd since 6.2
-MODULE_DECOMPRESS = "y"
-["category:default".">=5.19.0"."all"]
-FW_LOADER_COMPRESS = "y"
-FW_LOADER_COMPRESS_ZSTD = "y"
 ["category:default".">=4.20.0"."all"]
 # required for systemd-oomd
 PSI = "y"
@@ -270,6 +255,22 @@ IP_NF_IPTABLES_LEGACY = "m"
 IP6_NF_IPTABLES_LEGACY = "m"
 ["category:nftables".">=6.17"."all"]
 NETFILTER_XTABLES_LEGACY = "y"
+
+# compression: of modules, initramfs and firmware
+["category:compression".">=5.1.0"."all"]
+RD_ZSTD = "y"
+DECOMPRESS_ZSTD = "y" # Different from MODULE_DECOMPRESS
+["category:compression".">=5.19.0"."all"]
+FW_LOADER_COMPRESS = "y"
+FW_LOADER_COMPRESS_ZSTD = "y"
+["category:compression".">=6.2.0"."all"]
+# MODULE_COMPRESS_ZSTD exists since 5.13, but since kernels prior to 6.2 cannot
+# decompress it, we would break devices with split initramfs which use busybox
+# modprobe, so we only enforce it on 6.2 or newer
+MODULE_COMPRESS_ZSTD = "y"
+# MODULE_COMPRESS was added after the individual compression algorithm options
+["category:compression".">=6.12.0"."all"]
+MODULE_COMPRESS = "y"
 
 # containers: lxc, docker, etc.
 ["category:containers".">=0.0.0"."all"]
